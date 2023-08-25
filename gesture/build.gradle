@@ -3,15 +3,23 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+try {
+    apply from: "maven-publish.gradle"
+} catch (ignore) {
+    print("apply maven-publish.gradle failed" + ignore.message)
+}
+try {
+    apply from: "jitpack-publish.gradle"
+} catch (ignore) {
+    print("apply jitpack-publish.gradle failed" + ignore.message)
+}
+
 android {
     namespace 'chenchen.engine.gesture'
     compileSdk 33
 
     defaultConfig {
         minSdk 21
-        versionCode 1
-        versionName "1.0"
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 

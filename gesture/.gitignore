@@ -1,1 +1,4 @@
 /build
+/maven-publish.gradle
+/maven-publish.properties
+/jitpack-publish.gradle
