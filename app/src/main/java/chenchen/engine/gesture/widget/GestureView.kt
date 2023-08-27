@@ -1,9 +1,14 @@
-package chenchen.engine.gesture
+package chenchen.engine.gesture.widget
 
 import android.content.Context
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import chenchen.engine.gesture.BestGestureDetector
+import chenchen.engine.gesture.OnSimpleMoveListener
+import chenchen.engine.gesture.OnSimpleRotateListener
+import chenchen.engine.gesture.OnSimpleScaleListener
+import chenchen.engine.gesture.OnSimpleTouchListener
 
 /**
  * @author: chenchen

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <chenchen.engine.gesture.widget.AdsorptionViewGroup
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="50dp"
+        android:background="#22884443">
+
+        <chenchen.engine.gesture.widget.AdsorptionGestureView
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="#972374" />
+
+    </chenchen.engine.gesture.widget.AdsorptionViewGroup>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
