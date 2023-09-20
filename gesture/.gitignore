@@ -1,4 +1,4 @@
 /build
 /maven-publish.gradle
 /maven-publish.properties
-/jitpack-publish.gradle
+/jitpack-publish.gradle.kts

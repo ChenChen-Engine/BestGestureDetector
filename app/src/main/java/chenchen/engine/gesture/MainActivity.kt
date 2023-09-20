@@ -11,7 +11,8 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import chenchen.engine.gesture.activity.AdsorptionGestureActivity
 import chenchen.engine.gesture.activity.BestGestureActivity
-import chenchen.engine.gesture.databinding.ActivityMainBinding
+import chenchen.engine.gesture.demo.databinding.ActivityMainBinding
+import chenchen.engine.gesture.demo.R
 
 class MainActivity : AppCompatActivity() {
 

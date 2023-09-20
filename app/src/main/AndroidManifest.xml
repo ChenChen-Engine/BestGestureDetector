@@ -13,7 +13,7 @@
         android:theme="@style/Theme.Gesture"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name="chenchen.engine.gesture.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -21,8 +21,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".activity.BestGestureActivity" />
-        <activity android:name=".activity.AdsorptionGestureActivity" />
+        <activity android:name="chenchen.engine.gesture.activity.BestGestureActivity" />
+        <activity android:name="chenchen.engine.gesture.activity.AdsorptionGestureActivity" />
     </application>
 
 </manifest>

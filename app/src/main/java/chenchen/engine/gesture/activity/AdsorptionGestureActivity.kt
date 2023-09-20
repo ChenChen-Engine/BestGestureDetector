@@ -2,7 +2,7 @@ package chenchen.engine.gesture.activity
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import chenchen.engine.gesture.R
+import chenchen.engine.gesture.demo.R
 
 class AdsorptionGestureActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
