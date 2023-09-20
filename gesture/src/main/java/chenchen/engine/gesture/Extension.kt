@@ -76,19 +76,19 @@ private fun Matrix.clear() = this.apply { reset() }
 /**
  * 屏幕宽
  */
-val View.screenWidth: Int
+internal val View.screenWidth: Int
     get() = context.resources.displayMetrics.widthPixels
 
 /**
  * 屏幕高
  */
-val View.screenHeight: Int
+internal val View.screenHeight: Int
     get() = context.resources.displayMetrics.heightPixels
 
 /**
  * 获取状态栏高度
  */
-val View.statusBarHeight: Int
+internal val View.statusBarHeight: Int
     get() {
         val windowInsets = ViewCompat.getRootWindowInsets(this)
         if (windowInsets != null) {
@@ -101,7 +101,7 @@ val View.statusBarHeight: Int
 /**
  * 获取ActionBar高度
  */
-val View.actionBarHeight: Int
+internal val View.actionBarHeight: Int
     get() {
         return (context as? AppCompatActivity)?.supportActionBar?.height
             ?: (context as? AppCompatActivity)?.actionBar?.height
@@ -127,7 +127,7 @@ internal fun Int.nullIf(equals: Int?): Int? {
  *
  * PS: 这里只处理了`StatusBar`和`ActionBar`的高度，没有处理虚拟键盘和手势的高度，可能会有影响
  */
-internal fun View.getGlobalRect(
+fun View.getGlobalRect(
     rect: Rect, offset: Point? = null,
     isContainsStatusBar: Boolean = false,
     isContainsActionBar: Boolean = false,
