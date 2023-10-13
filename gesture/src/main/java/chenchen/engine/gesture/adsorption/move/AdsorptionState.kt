@@ -1,4 +1,4 @@
-package chenchen.engine.gesture.adsorption
+package chenchen.engine.gesture.adsorption.move
 
 import chenchen.engine.gesture.BestGestureDetector
 import chenchen.engine.gesture.MovementTrack

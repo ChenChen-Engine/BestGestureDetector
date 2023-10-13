@@ -1,4 +1,4 @@
-package chenchen.engine.gesture.adsorption
+package chenchen.engine.gesture.adsorption.move
 
 import android.animation.ValueAnimator
 import android.graphics.Rect
@@ -16,11 +16,11 @@ import kotlin.math.abs
  * @Description: 吸附
  */
 data class Adsorption(
-    /**
+        /**
      * 磁性物体
      */
     val magnetic: Magnetic,
-    /**
+        /**
      * 磁铁列表
      */
     val magnets: List<Magnet>,

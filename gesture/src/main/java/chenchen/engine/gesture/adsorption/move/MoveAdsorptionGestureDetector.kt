@@ -1,4 +1,4 @@
-package chenchen.engine.gesture.adsorption
+package chenchen.engine.gesture.adsorption.move
 
 import android.animation.PropertyValuesHolder
 import android.animation.ValueAnimator
@@ -7,10 +7,9 @@ import android.graphics.Rect
 import androidx.core.animation.doOnEnd
 import chenchen.engine.gesture.BestGestureDetector
 import chenchen.engine.gesture.ConstrainedAlignment
-import chenchen.engine.gesture.OnAdsorptionListener
 import chenchen.engine.gesture.ConstraintAlignment.*
 import chenchen.engine.gesture.ConstrainedAlignment.*
-import chenchen.engine.gesture.EdgeGestureDetector
+import chenchen.engine.gesture.MoveGestureDetector
 import chenchen.engine.gesture.MovementTrack
 import chenchen.engine.gesture.getGlobalRect
 import chenchen.engine.gesture.nullIf
@@ -21,12 +20,12 @@ import kotlin.math.min
 /**
  * @author: chenchen
  * @since: 2023/4/25 17:38
- * 吸附手势
+ * 移动吸附手势
  */
-class AdsorptionEdgeGestureDetector(
-    private val adsorption: Adsorption,
-    private val adsorptionListener: OnAdsorptionListener
-) : EdgeGestureDetector() {
+class MoveAdsorptionGestureDetector(
+        private val adsorption: Adsorption,
+        private val adsorptionListener: OnMoveAdsorptionListener
+) : MoveGestureDetector() {
 
     private val TAG = "AdsorptionEdgeGestureDe"
 
@@ -88,7 +87,7 @@ class AdsorptionEdgeGestureDetector(
                         val yValue = (it.getAnimatedValue("y") as? Int) ?: 0
                         adsorptionX = xValue - lastXValue
                         adsorptionY = yValue - lastYValue
-                        adsorptionListener.onAdsorption(this@AdsorptionEdgeGestureDetector)
+                        adsorptionListener.onAdsorption(this@MoveAdsorptionGestureDetector)
                         lastXValue = xValue
                         lastYValue = yValue
                     }
@@ -96,7 +95,7 @@ class AdsorptionEdgeGestureDetector(
                         //步骤3.2 通知吸附动画结束
                         adsorptionX = 0
                         adsorptionY = 0
-                        adsorptionListener.onAdsorptionEnd(this@AdsorptionEdgeGestureDetector)
+                        adsorptionListener.onAdsorptionEnd(this@MoveAdsorptionGestureDetector)
                         //步骤3.3 标记当前已经处于吸附状态
                         //x轴已经在吸附状态不重复记录状态，并且记录的状态永远为true，如果出现false就是错误
                         if (!adsorption.isAdsorptionH && !adsorption.isAdsorptionImmunityRegionH) {
@@ -318,9 +317,9 @@ class AdsorptionEdgeGestureDetector(
      * 测量左边吸附距离
      */
     private fun analyzeLeft(
-        magneticRect: Rect, magnetRect: Rect, magnet: Magnet,
-        alignment: ConstrainedAlignment,
-        lastAnalyzeResult: AnalyzeResult?): AnalyzeResult? {
+            magneticRect: Rect, magnetRect: Rect, magnet: Magnet,
+            alignment: ConstrainedAlignment,
+            lastAnalyzeResult: AnalyzeResult?): AnalyzeResult? {
         val distance: Int?
         var align: ConstrainedAlignment? = null
         var result: AnalyzeResult? = lastAnalyzeResult
@@ -378,9 +377,9 @@ class AdsorptionEdgeGestureDetector(
      * 测量水平居中吸附距离
      */
     private fun analyzeHorizontalCenter(
-        magneticRect: Rect, magnetRect: Rect, magnet: Magnet,
-        alignment: ConstrainedAlignment,
-        lastAnalyzeResult: AnalyzeResult?): AnalyzeResult? {
+            magneticRect: Rect, magnetRect: Rect, magnet: Magnet,
+            alignment: ConstrainedAlignment,
+            lastAnalyzeResult: AnalyzeResult?): AnalyzeResult? {
         val distance: Int?
         var align: ConstrainedAlignment? = null
         var result: AnalyzeResult? = lastAnalyzeResult
@@ -437,9 +436,9 @@ class AdsorptionEdgeGestureDetector(
      * 测量右边吸附距离
      */
     private fun analyzeRight(
-        magneticRect: Rect, magnetRect: Rect, magnet: Magnet,
-        alignment: ConstrainedAlignment,
-        lastAnalyzeResult: AnalyzeResult?): AnalyzeResult? {
+            magneticRect: Rect, magnetRect: Rect, magnet: Magnet,
+            alignment: ConstrainedAlignment,
+            lastAnalyzeResult: AnalyzeResult?): AnalyzeResult? {
         val distance: Int?
         var align: ConstrainedAlignment? = null
         var result: AnalyzeResult? = lastAnalyzeResult
@@ -496,9 +495,9 @@ class AdsorptionEdgeGestureDetector(
      * 测量顶部吸附距离
      */
     private fun analyzeTop(
-        magneticRect: Rect, magnetRect: Rect, magnet: Magnet,
-        alignment: ConstrainedAlignment,
-        lastAnalyzeResult: AnalyzeResult?): AnalyzeResult? {
+            magneticRect: Rect, magnetRect: Rect, magnet: Magnet,
+            alignment: ConstrainedAlignment,
+            lastAnalyzeResult: AnalyzeResult?): AnalyzeResult? {
         val distance: Int?
         var align: ConstrainedAlignment? = null
         var result: AnalyzeResult? = lastAnalyzeResult
@@ -556,9 +555,9 @@ class AdsorptionEdgeGestureDetector(
      * 测量垂直居中吸附距离
      */
     private fun analyzeVerticalCenter(
-        magneticRect: Rect, magnetRect: Rect, magnet: Magnet,
-        alignment: ConstrainedAlignment,
-        lastAnalyzeResult: AnalyzeResult?): AnalyzeResult? {
+            magneticRect: Rect, magnetRect: Rect, magnet: Magnet,
+            alignment: ConstrainedAlignment,
+            lastAnalyzeResult: AnalyzeResult?): AnalyzeResult? {
         val distance: Int?
         var align: ConstrainedAlignment? = null
         var result: AnalyzeResult? = lastAnalyzeResult
@@ -615,9 +614,9 @@ class AdsorptionEdgeGestureDetector(
      * 测量底部吸附距离
      */
     private fun analyzeBottom(
-        magneticRect: Rect, magnetRect: Rect, magnet: Magnet,
-        alignment: ConstrainedAlignment,
-        lastAnalyzeResult: AnalyzeResult?): AnalyzeResult? {
+            magneticRect: Rect, magnetRect: Rect, magnet: Magnet,
+            alignment: ConstrainedAlignment,
+            lastAnalyzeResult: AnalyzeResult?): AnalyzeResult? {
         val distance: Int?
         var align: ConstrainedAlignment? = null
         var result: AnalyzeResult? = lastAnalyzeResult

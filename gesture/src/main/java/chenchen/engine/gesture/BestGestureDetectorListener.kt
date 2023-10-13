@@ -1,7 +1,6 @@
 package chenchen.engine.gesture
 
 import android.graphics.PointF
-import chenchen.engine.gesture.adsorption.AdsorptionEdgeGestureDetector
 
 /**
  * 手势监听
@@ -12,7 +11,7 @@ import chenchen.engine.gesture.adsorption.AdsorptionEdgeGestureDetector
 /**
  * 触摸手势监听适配类
  */
-open class OnSimpleTouchListener : OnTouchListener {
+open class SimpleTouchListener : OnTouchListener {
     override fun onBeginTouch(detector: BestGestureDetector, x: Int, y: Int) = true
 
     override fun onTouchMove(detector: BestGestureDetector) = true
@@ -99,7 +98,7 @@ interface OnTouchListener {
 /**
  * 双指移动手势监听适配类
  */
-open class OnSimpleMoveListener : OnMoveListener {
+open class SimpleMoveListener : OnMoveListener {
     override fun onBeginMove(detector: BestGestureDetector) = true
 
     override fun onMove(detector: BestGestureDetector) = true
@@ -119,7 +118,7 @@ interface OnMoveListener {
 /**
  * 双指旋转手势监听适配类
  */
-open class OnSimpleRotateListener : OnRotateListener {
+open class SimpleRotateListener : OnRotateListener {
     override fun onBeginRotate(detector: BestGestureDetector) = true
 
     override fun onRotate(detector: BestGestureDetector) = true
@@ -139,7 +138,7 @@ interface OnRotateListener {
 /**
  * 双指缩放手势监听适配类
  */
-open class OnSimpleScaleListener : OnScaleListener {
+open class SimpleScaleListener : OnScaleListener {
     override fun onBeginScale(detector: BestGestureDetector) = true
 
     override fun onScale(detector: BestGestureDetector) = true
@@ -169,23 +168,3 @@ interface OnScaleListener {
     fun onScaleEnd(detector: BestGestureDetector)
 }
 
-/**
- * 吸附监听
- */
-interface OnAdsorptionListener {
-    /**
-     * 开始吸附
-     * 这里建议即使x,y轴达到了吸附区域，但通常只有吸附物的旋转角度为90°，180°，270°，360°/0°的时候才返回true
-     */
-    fun onBeginAdsorption(detector: AdsorptionEdgeGestureDetector): Boolean
-
-    /**
-     * 吸附中
-     */
-    fun onAdsorption(detector: AdsorptionEdgeGestureDetector): Boolean
-
-    /**
-     * 吸附结束
-     */
-    fun onAdsorptionEnd(detector: AdsorptionEdgeGestureDetector)
-}
