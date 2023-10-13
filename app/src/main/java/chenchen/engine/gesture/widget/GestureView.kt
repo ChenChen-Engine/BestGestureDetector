@@ -5,10 +5,10 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import chenchen.engine.gesture.BestGestureDetector
-import chenchen.engine.gesture.OnSimpleMoveListener
-import chenchen.engine.gesture.OnSimpleRotateListener
-import chenchen.engine.gesture.OnSimpleScaleListener
-import chenchen.engine.gesture.OnSimpleTouchListener
+import chenchen.engine.gesture.SimpleMoveListener
+import chenchen.engine.gesture.SimpleRotateListener
+import chenchen.engine.gesture.SimpleScaleListener
+import chenchen.engine.gesture.SimpleTouchListener
 
 /**
  * @author: chenchen
@@ -20,27 +20,27 @@ class GestureView : View {
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
 
     val gesture = BestGestureDetector(this).apply {
-        setOnTouchListener(object : OnSimpleTouchListener() {
+        setOnTouchListener(object : SimpleTouchListener() {
             override fun onTouchMove(detector: BestGestureDetector): Boolean {
                 offsetLeftAndRight(detector.moveX.toInt())
                 offsetTopAndBottom(detector.moveY.toInt())
                 return super.onTouchMove(detector)
             }
         })
-        setMoveListener(object : OnSimpleMoveListener() {
+        setMoveListener(object : SimpleMoveListener() {
             override fun onMove(detector: BestGestureDetector): Boolean {
                 offsetLeftAndRight(detector.moveX.toInt())
                 offsetTopAndBottom(detector.moveY.toInt())
                 return super.onMove(detector)
             }
         })
-        setRotationListener(object : OnSimpleRotateListener() {
+        setRotationListener(object : SimpleRotateListener() {
             override fun onRotate(detector: BestGestureDetector): Boolean {
                 this@GestureView.rotation += detector.rotation
                 return super.onRotate(detector)
             }
         })
-        setScaleListener(object : OnSimpleScaleListener() {
+        setScaleListener(object : SimpleScaleListener() {
             override fun onScale(detector: BestGestureDetector): Boolean {
                 scaleX *= detector.scaleFactor
                 scaleY *= detector.scaleFactor

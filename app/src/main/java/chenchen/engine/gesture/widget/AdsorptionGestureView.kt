@@ -10,12 +10,12 @@ import android.view.View
 import chenchen.engine.gesture.BestGestureDetector
 import chenchen.engine.gesture.ConstrainedAlignment
 import chenchen.engine.gesture.ConstraintAlignment
-import chenchen.engine.gesture.OnAdsorptionListener
-import chenchen.engine.gesture.OnSimpleTouchListener
-import chenchen.engine.gesture.adsorption.Adsorption
-import chenchen.engine.gesture.adsorption.AdsorptionEdgeGestureDetector
-import chenchen.engine.gesture.adsorption.Magnet
-import chenchen.engine.gesture.adsorption.Magnetic
+import chenchen.engine.gesture.SimpleTouchListener
+import chenchen.engine.gesture.adsorption.move.Adsorption
+import chenchen.engine.gesture.adsorption.move.Magnet
+import chenchen.engine.gesture.adsorption.move.Magnetic
+import chenchen.engine.gesture.adsorption.move.MoveAdsorptionGestureDetector
+import chenchen.engine.gesture.adsorption.move.OnMoveAdsorptionListener
 
 class AdsorptionGestureView : View {
 
@@ -30,7 +30,7 @@ class AdsorptionGestureView : View {
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
 
     val gesture = BestGestureDetector(this).apply {
-        setOnTouchListener(object : OnSimpleTouchListener() {
+        setOnTouchListener(object : SimpleTouchListener() {
             override fun onTouchMove(detector: BestGestureDetector): Boolean {
                 if (!adsorptionGesture.onMove(detector)) {
                     offsetLeftAndRight(detector.moveX.toInt())
@@ -43,21 +43,21 @@ class AdsorptionGestureView : View {
 
     val adsorptionGesture by lazy {
         val adsorption = Adsorption(
-            Magnetic(this, ConstrainedAlignment.all()),
-            arrayListOf(Magnet(parent as View, ConstraintAlignment.all())),
+                Magnetic(this, ConstrainedAlignment.all()),
+                arrayListOf(Magnet(parent as View, ConstraintAlignment.all())),
         )
-        AdsorptionEdgeGestureDetector(adsorption, object : OnAdsorptionListener {
-            override fun onBeginAdsorption(detector: AdsorptionEdgeGestureDetector): Boolean {
+        MoveAdsorptionGestureDetector(adsorption, object : OnMoveAdsorptionListener {
+            override fun onBeginAdsorption(detector: MoveAdsorptionGestureDetector): Boolean {
                 return true
             }
 
-            override fun onAdsorption(detector: AdsorptionEdgeGestureDetector): Boolean {
+            override fun onAdsorption(detector: MoveAdsorptionGestureDetector): Boolean {
                 offsetLeftAndRight(detector.adsorptionX)
                 offsetTopAndBottom(detector.adsorptionY)
                 return true
             }
 
-            override fun onAdsorptionEnd(detector: AdsorptionEdgeGestureDetector) = Unit
+            override fun onAdsorptionEnd(detector: MoveAdsorptionGestureDetector) = Unit
         })
     }
 
