@@ -473,45 +473,61 @@ internal open class BestGestureState {
     /**
      * 消费一次x轴移动累积值
      */
-    fun consumeAccumulateMoveX() {
+    fun consumeAccumulateMoveX(): Boolean {
+        if (!canConsumeAccumulateMoveX()) {
+            return false
+        }
         if (rememberAccumulateMoveX < 0) {
             rememberAccumulateMoveX += accumulateMoveX
         } else {
             rememberAccumulateMoveX -= accumulateMoveX
         }
+        return true
     }
 
     /**
      * 消费一次y轴移动累积值
      */
-    fun consumeAccumulateMoveY() {
+    fun consumeAccumulateMoveY(): Boolean {
+        if (!canConsumeAccumulateMoveY()) {
+            return false
+        }
         if (rememberAccumulateMoveY < 0) {
             rememberAccumulateMoveY += accumulateMoveY
         } else {
             rememberAccumulateMoveY -= accumulateMoveY
         }
+        return true
     }
 
     /**
      * 消费一次旋转累积值
      */
-    fun consumeAccumulateRotation() {
+    fun consumeAccumulateRotation(): Boolean {
+        if (!canConsumeAccumulateRotation()) {
+            return false
+        }
         if (rememberAccumulateRotation < 0) {
             rememberAccumulateRotation += accumulateRotation
         } else {
             rememberAccumulateRotation -= accumulateRotation
         }
+        return true
     }
 
     /**
      * 消费一次缩放累积值
      */
-    fun consumeAccumulateScale() {
+    fun consumeAccumulateScale(): Boolean {
+        if (!canConsumeAccumulateScale()) {
+            return false
+        }
         if (rememberAccumulateScale < 0) {
             rememberAccumulateScale += accumulateScale
         } else {
             rememberAccumulateScale -= accumulateScale
         }
+        return true
     }
 
     /**
