@@ -712,10 +712,10 @@ class BestGestureDetector(private val view: View) {
      * 为了避免出现这样的情况，将这样的值替换为1
      */
     private fun Float.scaleSafeValue(): Float {
-        return if (this.isNaN() || this.isInfinite()) {
-            1f
-        } else {
+        return if (!isFinite()) {
             this
+        } else {
+            1f
         }
     }
 

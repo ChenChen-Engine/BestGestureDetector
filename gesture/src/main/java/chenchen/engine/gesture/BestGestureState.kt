@@ -335,14 +335,8 @@ internal open class BestGestureState {
                 if (!pointerIds.contains(pointerId)) {
                     pointerIds.add(currentEvent.getPointerId(actionIndex))
                 }
-                if (isInSingleFingerProgress) {
-                    majorId = pointerIds.last()
-                    minorId = MotionEvent.INVALID_POINTER_ID
-                } else if (isInMultiFingerProgress) {
-                    //这里不会报错吧
-                    majorId = pointerIds[pointerIds.lastIndex - 1]
-                    minorId = pointerIds.last()
-                }
+                majorId = pointerIds[pointerIds.lastIndex - 1]
+                minorId = pointerIds.last()
             }
 
             MotionEvent.ACTION_POINTER_UP -> {
