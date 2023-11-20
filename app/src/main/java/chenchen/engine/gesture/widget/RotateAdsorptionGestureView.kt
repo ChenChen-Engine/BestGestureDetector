@@ -8,16 +8,18 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import chenchen.engine.gesture.BestGestureDetector
-import chenchen.engine.gesture.ConstrainedAlignment
-import chenchen.engine.gesture.ConstraintAlignment
-import chenchen.engine.gesture.SimpleTouchListener
-import chenchen.engine.gesture.adsorption.move.Adsorption
-import chenchen.engine.gesture.adsorption.move.Magnet
-import chenchen.engine.gesture.adsorption.move.Magnetic
-import chenchen.engine.gesture.adsorption.move.MoveAdsorptionGestureDetector
-import chenchen.engine.gesture.adsorption.move.OnMoveAdsorptionListener
+import chenchen.engine.gesture.OnTouchGestureListener
+import chenchen.engine.gesture.adsorption.rotate.Adsorption
+import chenchen.engine.gesture.adsorption.rotate.Magnet
+import chenchen.engine.gesture.adsorption.rotate.Magnetic
+import chenchen.engine.gesture.adsorption.rotate.OnRotateAdsorptionListener
+import chenchen.engine.gesture.adsorption.rotate.RotateAdsorptionGestureDetector
 
-class AdsorptionGestureView : View {
+/**
+ * @author: chenchen
+ * @since: 2023/11/7 9:40
+ */
+class RotateAdsorptionGestureView : View {
 
     private val paint = Paint().apply {
         isAntiAlias = true
@@ -30,11 +32,10 @@ class AdsorptionGestureView : View {
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
 
     val gesture = BestGestureDetector(this).apply {
-        setOnTouchListener(object : SimpleTouchListener() {
+        setOnTouchListener(object : OnTouchGestureListener {
             override fun onTouchMove(detector: BestGestureDetector): Boolean {
-                if (!adsorptionGesture.onMove(detector)) {
-                    offsetLeftAndRight(detector.moveX.toInt())
-                    offsetTopAndBottom(detector.moveY.toInt())
+                if (!adsorptionGesture.onRotate(detector)) {
+                    this@RotateAdsorptionGestureView.rotation += detector.rotation
                 }
                 return true
             }
@@ -43,21 +44,27 @@ class AdsorptionGestureView : View {
 
     val adsorptionGesture by lazy {
         val adsorption = Adsorption(
-                Magnetic(this, ConstrainedAlignment.all()),
-                arrayListOf(Magnet(parent as View, ConstraintAlignment.all())),
+            Magnetic(this),
+            arrayListOf(
+                Magnet(0, rRidThreshold = 50), Magnet(45, rRidThreshold = 50),
+                Magnet(90, rRidThreshold = 50), Magnet(135, rRidThreshold = 50),
+                Magnet(180, rRidThreshold = 50), Magnet(225, rRidThreshold = 50),
+                Magnet(270, rRidThreshold = 50), Magnet(315, rRidThreshold = 50),
+                Magnet(360, rRidThreshold = 50)),
         )
-        MoveAdsorptionGestureDetector(adsorption, object : OnMoveAdsorptionListener {
-            override fun onBeginAdsorption(detector: MoveAdsorptionGestureDetector): Boolean {
+        RotateAdsorptionGestureDetector(adsorption, object : OnRotateAdsorptionListener {
+            override fun onBeginAdsorption(detector: RotateAdsorptionGestureDetector): Boolean {
                 return true
             }
 
-            override fun onAdsorption(detector: MoveAdsorptionGestureDetector): Boolean {
-                offsetLeftAndRight(detector.adsorptionX)
-                offsetTopAndBottom(detector.adsorptionY)
+            override fun onAdsorption(detector: RotateAdsorptionGestureDetector): Boolean {
+                this@RotateAdsorptionGestureView.rotation += detector.adsorptionRotation
                 return true
             }
 
-            override fun onAdsorptionEnd(detector: MoveAdsorptionGestureDetector) = Unit
+            override fun onAdsorptionEnd(detector: RotateAdsorptionGestureDetector) {
+
+            }
         })
     }
 

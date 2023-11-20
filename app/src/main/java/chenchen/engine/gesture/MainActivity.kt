@@ -9,8 +9,10 @@ import android.widget.Button
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
-import chenchen.engine.gesture.activity.AdsorptionGestureActivity
+import chenchen.engine.gesture.activity.MoveAdsorptionGestureActivity
 import chenchen.engine.gesture.activity.BestGestureActivity
+import chenchen.engine.gesture.activity.RotationAdsorptionGestureActivity
+import chenchen.engine.gesture.activity.ScaleAdsorptionGestureActivity
 import chenchen.engine.gesture.demo.databinding.ActivityMainBinding
 import chenchen.engine.gesture.demo.R
 
@@ -19,7 +21,9 @@ class MainActivity : AppCompatActivity() {
     private val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
     private val items = arrayListOf(
         Item("基础手势", BestGestureActivity::class.java),
-        Item("吸附手势", AdsorptionGestureActivity::class.java)
+        Item("移动吸附手势", MoveAdsorptionGestureActivity::class.java),
+        Item("旋转手势", RotationAdsorptionGestureActivity::class.java),
+        Item("缩放手势", ScaleAdsorptionGestureActivity::class.java),
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {

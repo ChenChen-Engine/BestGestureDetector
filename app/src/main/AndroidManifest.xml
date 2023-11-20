@@ -22,7 +22,9 @@
             </intent-filter>
         </activity>
         <activity android:name="chenchen.engine.gesture.activity.BestGestureActivity" />
-        <activity android:name="chenchen.engine.gesture.activity.AdsorptionGestureActivity" />
+        <activity android:name="chenchen.engine.gesture.activity.MoveAdsorptionGestureActivity" />
+        <activity android:name="chenchen.engine.gesture.activity.RotationAdsorptionGestureActivity" />
+        <activity android:name="chenchen.engine.gesture.activity.ScaleAdsorptionGestureActivity" />
     </application>
 
 </manifest>
