@@ -6,7 +6,7 @@ import android.view.View
 import chenchen.engine.gesture.ConstrainedAlignment
 import chenchen.engine.gesture.ConstrainedAlignment.*
 import chenchen.engine.gesture.ConstraintAlignment
-import chenchen.engine.gesture.MovementTrack
+import chenchen.engine.gesture.MoveMovementTrack
 import chenchen.engine.gesture.getGlobalRect
 import kotlin.math.abs
 
@@ -16,11 +16,11 @@ import kotlin.math.abs
  * @Description: 吸附
  */
 data class Adsorption(
-        /**
+    /**
      * 磁性物体
      */
     val magnetic: Magnetic,
-        /**
+    /**
      * 磁铁列表
      */
     val magnets: List<Magnet>,
@@ -74,12 +74,12 @@ data class Adsorption(
     /**
      * 上次被吸住的水平运动轨迹
      */
-    internal var hMovementTrack: MovementTrack = MovementTrack.None
+    internal var hMovementTrack: MoveMovementTrack = MoveMovementTrack.None
 
     /**
      * 上次被吸住的垂直运动轨迹
      */
-    internal var vMovementTrack: MovementTrack = MovementTrack.None
+    internal var vMovementTrack: MoveMovementTrack = MoveMovementTrack.None
 
     /**
      * X轴是否吸附，吸附之后需要挣脱，X轴吸附后可以自由移动Y轴
@@ -108,12 +108,12 @@ data class Adsorption(
     /**
      * 是否处于X轴免疫吸附的区域
      */
-    internal var isAdsorptionImmunityRegionH = false
+    internal var isHAdsorptionImmunityRegion = false
 
     /**
      * 是否处于Y轴免疫吸附的区域
      */
-    internal var isAdsorptionImmunityRegionV = false
+    internal var isVAdsorptionImmunityRegion = false
 
     /**
      * 待挣脱的X轴值
@@ -125,7 +125,7 @@ data class Adsorption(
                 //步骤5.3 挣脱后是处于免疫区
                 field = 0f
                 isAdsorptionH = false
-                isAdsorptionImmunityRegionH = true
+                isHAdsorptionImmunityRegion = true
                 //步骤5.4 找出磁性最大的磁铁，以它的免疫区为准
                 pendingConsumeHImmunityThreshold = getMaxHImmunityThreshold()
             }
@@ -141,7 +141,7 @@ data class Adsorption(
             if (field <= 0f) {
                 field = 0f
                 isAdsorptionV = false
-                isAdsorptionImmunityRegionV = true
+                isVAdsorptionImmunityRegion = true
                 //步骤5.4 找出磁性最大的磁铁，以它的免疫区为准
                 pendingConsumeVImmunityThreshold = getMaxVImmunityThreshold()
             }
@@ -157,7 +157,7 @@ data class Adsorption(
             if (field <= 0f) {
                 //步骤 6.3 脱离免疫区
                 field = 0f
-                isAdsorptionImmunityRegionH = false
+                isHAdsorptionImmunityRegion = false
             }
         }
 
@@ -171,7 +171,7 @@ data class Adsorption(
             if (field <= 0f) {
                 //步骤 6.3 脱离免疫区
                 field = 0f
-                isAdsorptionImmunityRegionV = false
+                isVAdsorptionImmunityRegion = false
             }
         }
 
@@ -305,20 +305,20 @@ data class Adsorption(
         if (isAdsorptionH) {
             //步骤5.2 判断吸附时的手势，如果是反方向就消费，如果换了一遍方向，就换手势
             when (hMovementTrack) {
-                MovementTrack.LeftToRight -> {
+                MoveMovementTrack.LeftToRight -> {
                     if (moveX < 0) {
                         //步骤5.2.1.1 手势是从左往右被吸附的，那么往左移动就消费挣脱值
                         pendingConsumeHRidThreshold += moveX
                     } else if (moveX > 0) {
                         //步骤5.2.1.2 手势是从左往右被吸附的，继续往右移动，切换手势变成从右往左
-                        hMovementTrack = MovementTrack.RightToLeft
+                        hMovementTrack = MoveMovementTrack.RightToLeft
                         pendingConsumeHRidThreshold = getMaxHRidThreshold()
                     }
                 }
-                MovementTrack.RightToLeft -> {
+                MoveMovementTrack.RightToLeft -> {
                     if (moveX < 0) {
                         //步骤5.2.1.2 手势是从右往左被吸附的，继续往左移动，切换手势变成从左往右
-                        hMovementTrack = MovementTrack.LeftToRight
+                        hMovementTrack = MoveMovementTrack.LeftToRight
                         pendingConsumeHRidThreshold = getMaxHRidThreshold()
                     } else if (moveX > 0) {
                         //步骤5.2.1.1 手势是从右往左被吸附的，那么往右移动就消费挣脱值
@@ -336,17 +336,17 @@ data class Adsorption(
     fun consumeVRidThreshold(moveY: Float) {
         if (isAdsorptionV) {
             when (vMovementTrack) {
-                MovementTrack.TopToBottom -> {
+                MoveMovementTrack.TopToBottom -> {
                     if (moveY < 0) {
                         pendingConsumeVRidThreshold += moveY
                     } else if (moveY > 0) {
-                        vMovementTrack = MovementTrack.BottomToTop
+                        vMovementTrack = MoveMovementTrack.BottomToTop
                         pendingConsumeVRidThreshold = getMaxVRidThreshold()
                     }
                 }
-                MovementTrack.BottomToTop -> {
+                MoveMovementTrack.BottomToTop -> {
                     if (moveY < 0) {
-                        vMovementTrack = MovementTrack.TopToBottom
+                        vMovementTrack = MoveMovementTrack.TopToBottom
                         pendingConsumeVRidThreshold = getMaxVRidThreshold()
                     } else if (moveY > 0) {
                         pendingConsumeVRidThreshold -= moveY
@@ -369,10 +369,10 @@ data class Adsorption(
      */
     fun consumeHImmunityThreshold(moveX: Float) {
         //步骤6.1 必须处于免疫区才消费
-        if (isAdsorptionImmunityRegionH) {
+        if (isHAdsorptionImmunityRegion) {
             //步骤6.2 判断吸附时的手势
             when (hMovementTrack) {
-                MovementTrack.LeftToRight -> {
+                MoveMovementTrack.LeftToRight -> {
                     if (moveX < 0) {
                         //6.2.1 手势是从左往右被吸附的，那么往左移动就脱离免疫区，这里没有去消费moveX，原因上面注释写了
                         val distance = getHAlignmentDistance()
@@ -381,15 +381,15 @@ data class Adsorption(
                         }
                     } else if (moveX > 0) {
                         //6.2.2 手势是从左往右被吸附的，继续往右移动，切换手势变成从右往左
-                        hMovementTrack = MovementTrack.RightToLeft
+                        hMovementTrack = MoveMovementTrack.RightToLeft
                         //这里直接脱离免疫区，因为改变了方向
                         pendingConsumeHImmunityThreshold = 0f
                     }
                 }
-                MovementTrack.RightToLeft -> {
+                MoveMovementTrack.RightToLeft -> {
                     if (moveX < 0) {
                         //6.2.2 手势是从右往左被吸附的，继续往左移动，切换手势变成从左往右
-                        hMovementTrack = MovementTrack.LeftToRight
+                        hMovementTrack = MoveMovementTrack.LeftToRight
                         //这里直接脱离免疫区，因为改变了方向
                         pendingConsumeHImmunityThreshold = 0f
                     } else if (moveX > 0) {
@@ -406,22 +406,22 @@ data class Adsorption(
     }
 
     fun consumeVImmunityThreshold(moveY: Float) {
-        if (isAdsorptionImmunityRegionV) {
+        if (isVAdsorptionImmunityRegion) {
             when (vMovementTrack) {
-                MovementTrack.TopToBottom -> {
+                MoveMovementTrack.TopToBottom -> {
                     if (moveY < 0) {
                         val distance = getVAlignmentDistance()
                         if (abs(distance) > pendingConsumeVImmunityThreshold) {
                             pendingConsumeVImmunityThreshold = 0f
                         }
                     } else if (moveY > 0) {
-                        vMovementTrack = MovementTrack.BottomToTop
+                        vMovementTrack = MoveMovementTrack.BottomToTop
                         pendingConsumeVImmunityThreshold = 0f
                     }
                 }
-                MovementTrack.BottomToTop -> {
+                MoveMovementTrack.BottomToTop -> {
                     if (moveY < 0) {
-                        vMovementTrack = MovementTrack.TopToBottom
+                        vMovementTrack = MoveMovementTrack.TopToBottom
                         pendingConsumeVImmunityThreshold = 0f
                     } else if (moveY > 0) {
                         val distance = getVAlignmentDistance()

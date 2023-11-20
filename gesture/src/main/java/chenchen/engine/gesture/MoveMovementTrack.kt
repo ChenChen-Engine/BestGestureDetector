@@ -5,7 +5,7 @@ package chenchen.engine.gesture
  * @since: 2023/3/13 9:36
  * 手势运动轨迹
  */
-enum class MovementTrack {
+enum class MoveMovementTrack {
     /*空*/
     None,
 

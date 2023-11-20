@@ -70,10 +70,10 @@ class BestGestureDetector(private val view: View) {
             BestGestureStateApi28Impl(view)
         }
     }
-    private var scaleListener: OnScaleListener? = null
-    private var rotateListener: OnRotateListener? = null
-    private var moveListener: OnMoveListener? = null
-    private var touchListener: OnTouchListener? = null
+    private var scaleListener: OnScaleGestureListener? = null
+    private var rotateListener: OnRotateGestureListener? = null
+    private var moveListener: OnMoveGestureListener? = null
+    private var touchListener: OnTouchGestureListener? = null
 
     fun onTouchEvent(event: MotionEvent): Boolean {
         state.resetConsumeValue()
@@ -845,28 +845,28 @@ class BestGestureDetector(private val view: View) {
     /**
      * 设置触摸手势监听，这个必须设置，否则无法响应单指手势，单指手势都不响应双指也是无法响应的
      */
-    fun setOnTouchListener(listener: OnTouchListener) {
+    fun setOnTouchListener(listener: OnTouchGestureListener) {
         this.touchListener = listener
     }
 
     /**
      * 设置双指缩放手势监听，双指手势必须设置一个监听才会生效
      */
-    fun setScaleListener(listener: OnScaleListener) {
+    fun setScaleListener(listener: OnScaleGestureListener) {
         this.scaleListener = listener
     }
 
     /**
      * 设置双指旋转手势监听，双指手势必须设置一个监听才会生效
      */
-    fun setRotationListener(listener: OnRotateListener) {
+    fun setRotationListener(listener: OnRotateGestureListener) {
         this.rotateListener = listener
     }
 
     /**
      * 设置双指移动手势监听，双指手势必须设置一个监听才会生效
      */
-    fun setMoveListener(listener: OnMoveListener) {
+    fun setMoveListener(listener: OnMoveGestureListener) {
         this.moveListener = listener
     }
 

@@ -117,6 +117,13 @@ internal fun Int.nullIf(equals: Int?): Int? {
 }
 
 /**
+ * 如果相等则为null
+ */
+internal fun Float.nullIf(equals: Float?): Float? {
+    return if (this == equals) null else this
+}
+
+/**
  * 获取以[androidx.appcompat.R.id.content]为全局坐标的坐标，即使不可见，
  * 可通过参数[isContainsStatusBar]和[isContainsActionBar]来控制是否包含`StatusBar`和`ActionBar`的高度
  *

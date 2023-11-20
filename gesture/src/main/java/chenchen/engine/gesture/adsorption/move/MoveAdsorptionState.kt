@@ -1,24 +1,25 @@
 package chenchen.engine.gesture.adsorption.move
 
 import chenchen.engine.gesture.BestGestureDetector
-import chenchen.engine.gesture.MovementTrack
-import chenchen.engine.gesture.MovementTrack.*
+import chenchen.engine.gesture.MoveMovementTrack
+import chenchen.engine.gesture.MoveMovementTrack.*
 
 /**
+ * 移动轨迹
  * @author: chenchen
  * @since: 2023/4/27 10:11
  */
-class AdsorptionState {
+class MoveAdsorptionState {
 
     /**
      * 水平滑动轨迹
      */
-    var hMovementTrack: MovementTrack = None
+    var hMovementTrack: MoveMovementTrack = None
 
     /**
      * 垂直滑动轨迹
      */
-    var vMovementTrack: MovementTrack = None
+    var vMovementTrack: MoveMovementTrack = None
 
 
     /**
