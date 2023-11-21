@@ -160,5 +160,29 @@ class MotionEventCompat(val event: MotionEvent) {
     fun recycle() {
         event.recycle()
     }
+
+    /**
+     * 做一个简易的比较
+     */
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as MotionEventCompat
+        if (event.flags != other.event.flags) return false
+        if (event.edgeFlags != other.event.edgeFlags) return false
+        if (event.downTime != other.event.downTime) return false
+        if (event.eventTime != other.event.eventTime) return false
+        if (event.action != other.event.action) return false
+        if (event.actionMasked != other.event.actionMasked) return false
+        if (event.actionIndex != other.event.actionIndex) return false
+        if (event.buttonState != other.event.buttonState) return false
+        if (event.metaState != other.event.metaState) return false
+        if (event.pointerCount != other.event.pointerCount) return false
+        if (event.rawX != other.event.rawX) return false
+        if (event.rawY != other.event.rawY) return false
+        if (event.x != other.event.x) return false
+        if (event.y != other.event.y) return false
+        return true
+    }
 }
 

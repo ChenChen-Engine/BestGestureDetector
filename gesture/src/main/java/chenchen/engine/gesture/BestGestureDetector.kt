@@ -639,7 +639,7 @@ class BestGestureDetector(private val view: View) {
             if (currentMajorIndex != MotionEvent.INVALID_POINTER_ID
                 && previousMajorIndex != MotionEvent.INVALID_POINTER_ID) {
                 state.currentEvent!!.getRawY(currentMajorIndex) - state.previousEvent!!.getRawY(previousMajorIndex)
-            }else{
+            } else {
                 0f
             }
         }
@@ -734,7 +734,7 @@ class BestGestureDetector(private val view: View) {
     }
 
     /**
-     * 获取双指中心点
+     * 获取多指中心点
      */
     private fun getMultiFingerMidPoint(event: MotionEventCompat): PointF {
         val point = PointF()
@@ -745,6 +745,25 @@ class BestGestureDetector(private val view: View) {
             if (pointerIndex != MotionEvent.INVALID_POINTER_ID) {
                 point.x += event.getRawX(pointerIndex)
                 point.y += event.getRawY(pointerIndex)
+            }
+        }
+        point.x /= pointerSize
+        point.y /= pointerSize
+        return point
+    }
+
+    /**
+     * 获取基于[View]内的多指中心点
+     */
+    private fun getFocusPoint(event: MotionEventCompat): PointF {
+        val point = PointF()
+        val pointerIds = state.getTrackPointerIds(event)
+        val pointerSize = pointerIds.size
+        for (i in 0 until pointerSize) {
+            val pointerIndex = event.findPointerIndex(pointerIds[i])
+            if (pointerIndex != MotionEvent.INVALID_POINTER_ID) {
+                point.x += event.getX(pointerIndex)
+                point.y += event.getY(pointerIndex)
             }
         }
         point.x /= pointerSize
@@ -805,6 +824,24 @@ class BestGestureDetector(private val view: View) {
             cView = (cView.parent as? View)
         }
         return absY + view.statusBarHeight + view.actionBarHeight + view.height.toFloat() / 2f
+    }
+
+    /**
+     * 获取当前事件的焦点，焦点指的是所有手指的中间
+     * 常用于对imageMatrix的缩放焦点处理
+     * 不可用于对[View]的缩放焦点处理
+     */
+    fun getFocus(event: MotionEventCompat): PointF {
+        return getFocusPoint(event)
+    }
+
+    /**
+     * 获取当前事件原始的焦点，焦点指的是所有手指的中间
+     */
+    fun getRawFocus(event: MotionEventCompat):PointF{
+        val focus = getMultiFingerMidPoint(event)
+        focus.y -= view.statusBarHeight - view.actionBarHeight
+        return focus
     }
 
     /**

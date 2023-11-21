@@ -362,7 +362,6 @@ internal open class BestGestureState {
                 updateTrackPointerIds()
             }
         }
-        Log.d(TAG, "rememberPointerId:current: $currentTrackPointerIds")
     }
 
     /**
