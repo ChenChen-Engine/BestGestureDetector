@@ -37,13 +37,13 @@ class GestureView : View {
         })
         setRotationListener(object : OnRotateGestureListener {
             override fun onRotate(detector: BestGestureDetector): Boolean {
-                Log.d("TAG", "onRotate: ${detector.rotation}")
                 this@GestureView.rotation += detector.rotation
                 return true
             }
         })
         setScaleListener(object : OnScaleGestureListener {
             override fun onScale(detector: BestGestureDetector): Boolean {
+                Log.e("TAG", "onScale: ${detector.scaleFactor}", )
                 scaleX *= detector.scaleFactor
                 scaleY *= detector.scaleFactor
                 return true

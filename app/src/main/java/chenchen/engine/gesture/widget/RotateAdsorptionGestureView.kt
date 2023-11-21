@@ -8,6 +8,7 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import chenchen.engine.gesture.BestGestureDetector
+import chenchen.engine.gesture.OnScaleGestureListener
 import chenchen.engine.gesture.OnTouchGestureListener
 import chenchen.engine.gesture.adsorption.rotate.Adsorption
 import chenchen.engine.gesture.adsorption.rotate.Magnet
@@ -34,6 +35,11 @@ class RotateAdsorptionGestureView : View {
     val gesture = BestGestureDetector(this).apply {
         setOnTouchListener(object : OnTouchGestureListener {
             override fun onTouchMove(detector: BestGestureDetector): Boolean {
+                return true
+            }
+        })
+        setScaleListener(object:OnScaleGestureListener{
+            override fun onScale(detector: BestGestureDetector): Boolean {
                 if (!adsorptionGesture.onRotate(detector)) {
                     this@RotateAdsorptionGestureView.rotation += detector.rotation
                 }
