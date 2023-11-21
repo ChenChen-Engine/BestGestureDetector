@@ -88,35 +88,29 @@ class BestGestureDetector(private val view: View) {
                     state.rememberPointerId()
                 }
             }
-
             MotionEvent.ACTION_POINTER_DOWN -> {
                 onPointerDown(state.currentEvent!!).apply {
                     state.rememberPointerId()
                     state.rememberPreviousEvent()
                 }
             }
-
             MotionEvent.ACTION_MOVE -> {
                 onMove(state.currentEvent!!).apply {
                     state.rememberPreviousEvent()
                 }
             }
-
             MotionEvent.ACTION_POINTER_UP -> {
                 onPointerUp(state.currentEvent!!).apply {
                     state.rememberPointerId()
                     state.rememberPreviousEvent()
                 }
             }
-
             MotionEvent.ACTION_UP -> {
                 onUp(state.currentEvent!!)
             }
-
             MotionEvent.ACTION_CANCEL -> {
                 onCancel(state.currentEvent!!)
             }
-
             else -> false
         }
     }
@@ -257,7 +251,6 @@ class BestGestureDetector(private val view: View) {
                     touchListener?.onTouchEnd(this)
                     state.recycleState()
                 }
-
                 else -> {
                     //单指手势未完成，应该是打算双击，继续分发手势
                     onAndroidGesture.onTouchEvent(event.event)
@@ -409,7 +402,10 @@ class BestGestureDetector(private val view: View) {
             /**
              * warning 长按后不会触发onScroll，不能在这里处理移动事件
              */
-            override fun onScroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float) = true
+            override fun onScroll(
+                e1: MotionEvent, e2: MotionEvent,
+                distanceX: Float, distanceY: Float
+            ) = true
 
             override fun onLongPress(e: MotionEvent) {
                 if (!state.isInSingleFingerProgress || state.isUsedMultiFinger) {
@@ -430,7 +426,10 @@ class BestGestureDetector(private val view: View) {
                 }
             }
 
-            override fun onFling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float) = true
+            override fun onFling(
+                e1: MotionEvent, e2: MotionEvent,
+                velocityX: Float, velocityY: Float
+            ) = true
 
             /**
              * 不是双击的时候，永远确认是单击
@@ -541,7 +540,7 @@ class BestGestureDetector(private val view: View) {
      */
     val scaleFactor: Float
         get() {
-            val value = calculateScaleFactor().scaleSafeValue()
+            val value = calculateScaleFactor()
             return state.getScaleFactor(value)
         }
 
@@ -577,13 +576,13 @@ class BestGestureDetector(private val view: View) {
      * 计算缩放比
      */
     private fun calculateScaleFactor(): Float {
-        return if (state.isInMultiFingerProgress) {
+        return (if (state.isInMultiFingerProgress) {
             getMultiFingerDistance(state.currentEvent!!) /
                     getMultiFingerDistance(state.previousEvent!!)
         } else {
             getSingleFingerDistance(state.currentEvent!!) /
                     getSingleFingerDistance(state.previousEvent!!)
-        }
+        }).scaleSafeValue()
     }
 
     /**
@@ -607,9 +606,18 @@ class BestGestureDetector(private val view: View) {
             getMultiFingerMidPoint(state.currentEvent!!).x -
                     getMultiFingerMidPoint(state.previousEvent!!).x
         } else {
-            val currentMajorIndex = state.currentEvent!!.findPointerIndex(state.majorId)
-            val previousMajorIndex = state.previousEvent!!.findPointerIndex(state.majorId)
-            state.currentEvent!!.getRawX(currentMajorIndex) - state.previousEvent!!.getRawX(previousMajorIndex)
+            val currentMajorId = state.getTrackPointerIds(state.currentEvent)
+                .firstOrNull() ?: return 0f
+            val previousMajorId = state.getTrackPointerIds(state.previousEvent)
+                .firstOrNull() ?: return 0f
+            val currentMajorIndex = state.currentEvent!!.findPointerIndex(currentMajorId)
+            val previousMajorIndex = state.previousEvent!!.findPointerIndex(previousMajorId)
+            if (currentMajorIndex != MotionEvent.INVALID_POINTER_ID
+                && previousMajorIndex != MotionEvent.INVALID_POINTER_ID) {
+                state.currentEvent!!.getRawX(currentMajorIndex) - state.previousEvent!!.getRawX(previousMajorIndex)
+            } else {
+                0f
+            }
         }
         return value
     }
@@ -622,9 +630,18 @@ class BestGestureDetector(private val view: View) {
             getMultiFingerMidPoint(state.currentEvent!!).y -
                     getMultiFingerMidPoint(state.previousEvent!!).y
         } else {
-            val currentMajorIndex = state.currentEvent!!.findPointerIndex(state.majorId)
-            val previousMajorIndex = state.previousEvent!!.findPointerIndex(state.majorId)
-            state.currentEvent!!.getRawY(currentMajorIndex) - state.previousEvent!!.getRawY(previousMajorIndex)
+            val currentMajorId = state.getTrackPointerIds(state.currentEvent)
+                .firstOrNull() ?: return 0f
+            val previousMajorId = state.getTrackPointerIds(state.previousEvent)
+                .firstOrNull() ?: return 0f
+            val currentMajorIndex = state.currentEvent!!.findPointerIndex(currentMajorId)
+            val previousMajorIndex = state.previousEvent!!.findPointerIndex(previousMajorId)
+            if (currentMajorIndex != MotionEvent.INVALID_POINTER_ID
+                && previousMajorIndex != MotionEvent.INVALID_POINTER_ID) {
+                state.currentEvent!!.getRawY(currentMajorIndex) - state.previousEvent!!.getRawY(previousMajorIndex)
+            }else{
+                0f
+            }
         }
         return value
     }
@@ -633,7 +650,8 @@ class BestGestureDetector(private val view: View) {
      * 获取单指之间的距离
      */
     private fun getSingleFingerDistance(event: MotionEventCompat): Float {
-        val majorIndex = event.findPointerIndex(state.majorId)
+        val majorId = state.getTrackPointerIds(event).firstOrNull() ?: return 0f
+        val majorIndex = event.findPointerIndex(majorId)
         return getDistance(event.getRawX(majorIndex), event.getRawY(majorIndex), state.pivot.x, state.pivot.y)
     }
 
@@ -641,10 +659,22 @@ class BestGestureDetector(private val view: View) {
      * 获取多指之间的距离
      */
     private fun getMultiFingerDistance(event: MotionEventCompat): Float {
-        val majorIndex = event.findPointerIndex(state.majorId)
-        val minorIndex = event.findPointerIndex(state.minorId)
-        return getDistance(event.getRawX(majorIndex), event.getRawY(majorIndex),
-            event.getRawX(minorIndex), event.getRawY(minorIndex))
+        var distance = 0f
+        var majorIndex: Int
+        var minorIndex: Int
+        val pointerIds = state.getTrackPointerIds(event)
+        val pointerSize = pointerIds.size
+        for (i in 0 until pointerSize) {
+            val nextIndex = (i + 1) % pointerSize
+            majorIndex = event.findPointerIndex(pointerIds[i])
+            minorIndex = event.findPointerIndex(pointerIds[nextIndex])
+            if (majorIndex != MotionEvent.INVALID_POINTER_ID &&
+                minorIndex != MotionEvent.INVALID_POINTER_ID) {
+                distance += getDistance(event.getRawX(majorIndex), event.getRawY(majorIndex),
+                    event.getRawX(minorIndex), event.getRawY(minorIndex))
+            }
+        }
+        return distance
     }
 
     /**
@@ -660,18 +690,34 @@ class BestGestureDetector(private val view: View) {
      * 获取单指旋转角度
      */
     private fun getSingleFingerRotation(event: MotionEventCompat): Float {
-        val majorIndex = event.findPointerIndex(state.majorId)
+        val majorId = state.getTrackPointerIds(event).firstOrNull() ?: return 0f
+        val majorIndex = event.findPointerIndex(majorId)
         return getRotation(event.getRawX(majorIndex), event.getRawY(majorIndex), state.pivot.x, state.pivot.y)
     }
 
     /**
      * 获取多指旋转角度
+     * GPT提供的计算公式，对比1.0.0的公式，小数点第4位开始会有误差
      */
     private fun getMultiFingerRotation(event: MotionEventCompat): Float {
-        val majorIndex = event.findPointerIndex(state.majorId)
-        val minorIndex = event.findPointerIndex(state.minorId)
-        return getRotation(event.getRawX(majorIndex), event.getRawY(majorIndex),
-            event.getRawX(minorIndex), event.getRawY(minorIndex))
+        var startX = Float.MIN_VALUE
+        var startY = Float.MIN_VALUE
+        var centerX = Float.MIN_VALUE
+        var centerY = Float.MIN_VALUE
+        val pointerIds = state.getTrackPointerIds(event)
+        val pointerSize = pointerIds.size
+        for (i in 0 until pointerSize) {
+            val pointerIndex = event.findPointerIndex(pointerIds[i])
+            if (pointerIndex != MotionEvent.INVALID_POINTER_ID) {
+                centerX += event.getRawX(pointerIndex)
+                centerY += event.getRawY(pointerIndex)
+                if (startX == Float.MIN_VALUE || startY == Float.MIN_VALUE) {
+                    startX = centerX
+                    startY = centerY
+                }
+            }
+        }
+        return getRotation(startX, startY, centerX / pointerSize, centerY / pointerSize)
     }
 
     /**
@@ -691,10 +737,19 @@ class BestGestureDetector(private val view: View) {
      * 获取双指中心点
      */
     private fun getMultiFingerMidPoint(event: MotionEventCompat): PointF {
-        val majorIndex = event.findPointerIndex(state.majorId)
-        val minorIndex = event.findPointerIndex(state.minorId)
-        return getMidPoint(event.getRawX(majorIndex), event.getRawY(majorIndex),
-            event.getRawX(minorIndex), event.getRawY(minorIndex))
+        val point = PointF()
+        val pointerIds = state.getTrackPointerIds(event)
+        val pointerSize = pointerIds.size
+        for (i in 0 until pointerSize) {
+            val pointerIndex = event.findPointerIndex(pointerIds[i])
+            if (pointerIndex != MotionEvent.INVALID_POINTER_ID) {
+                point.x += event.getRawX(pointerIndex)
+                point.y += event.getRawY(pointerIndex)
+            }
+        }
+        point.x /= pointerSize
+        point.y /= pointerSize
+        return point
     }
 
     /**
@@ -712,7 +767,7 @@ class BestGestureDetector(private val view: View) {
      * 为了避免出现这样的情况，将这样的值替换为1
      */
     private fun Float.scaleSafeValue(): Float {
-        return if (!isFinite()) {
+        return if (isFinite()) {
             this
         } else {
             1f
@@ -750,6 +805,15 @@ class BestGestureDetector(private val view: View) {
             cView = (cView.parent as? View)
         }
         return absY + view.statusBarHeight + view.actionBarHeight + view.height.toFloat() / 2f
+    }
+
+    /**
+     * 设置追踪的手指数量，最低数量为2
+     * 单指设置无效，单指只追踪一根手指，多指至少追踪两根手指
+     * @param count 手指数量，必须>=2
+     */
+    fun setTrackPointerIdCount(count: Int) {
+        state.setTrackPointerIdCount(count)
     }
 
     /**

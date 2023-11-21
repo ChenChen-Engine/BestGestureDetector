@@ -1,10 +1,12 @@
 package chenchen.engine.gesture
 
 import android.graphics.PointF
+import android.util.Log
 import android.view.MotionEvent
 import chenchen.engine.gesture.compat.MotionEventCompat
 import chenchen.engine.gesture.compat.MotionEventCompat.Companion.compat
 import chenchen.engine.gesture.compat.MotionEventCompat.Companion.obtain
+import java.lang.NullPointerException
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -42,19 +44,19 @@ internal open class BestGestureState {
     val pivot = PointF()
 
     /**
-     * 主手指Id
-     */
-    var majorId = MotionEvent.INVALID_POINTER_ID
-
-    /**
-     * 次手指Id
-     */
-    var minorId = MotionEvent.INVALID_POINTER_ID
-
-    /**
      * 手指id
      */
     val pointerIds = arrayListOf<Int>()
+
+    /**
+     * 已追踪的手指id
+     */
+    private val currentTrackPointerIds = arrayListOf<Int>()
+
+    /**
+     * 已追踪的手指id
+     */
+    private val previousTrackPointerIds = arrayListOf<Int>()
 
     /**
      * 双指是否正在缩放中
@@ -72,21 +74,14 @@ internal open class BestGestureState {
     var isInMoveProgress = false
 
     /**
-     * 是否吸附中
-     */
-    var isInAdsorptionProgress = false
-
-    /**
      * 是否单指手势
      */
     var isInSingleFingerProgress = false
-        private set
 
     /**
      * 是否双指手势
      */
     var isInMultiFingerProgress = false
-        private set
 
     /**
      * 是否处于单指长按当中，如果处于长按，需要自己处理[MotionEvent.ACTION_UP]
@@ -165,6 +160,13 @@ internal open class BestGestureState {
         get() {
             return field - offsetTouchRawY
         }
+
+    /**
+     * 追踪的手指数量，最低数量为2，
+     * 单指设置无效，单指只追踪一根手指，多指至少追踪两根手指
+     */
+    var trackPointerIdCount = 2
+        private set
 
     /**
      * 在一次事件中消费掉部分moveX的值
@@ -285,6 +287,8 @@ internal open class BestGestureState {
         }
         if (currentEvent != null) {
             previousEvent = currentEvent!!.obtain()
+            previousTrackPointerIds.clear()
+            previousTrackPointerIds.addAll(currentTrackPointerIds)
         }
     }
 
@@ -315,70 +319,71 @@ internal open class BestGestureState {
     }
 
     /**
+     * 设置追踪的手指数量，最低数量为2
+     * 单指设置无效，单指只追踪一根手指，多指至少追踪两根手指
+     * @param count 手指数量，必须>=2
+     */
+    fun setTrackPointerIdCount(count: Int) {
+        trackPointerIdCount = max(count, 2)
+        while (currentTrackPointerIds.size > trackPointerIdCount) {
+            currentTrackPointerIds.removeLastOrNull()
+        }
+    }
+
+    /**
+     * 获取追踪的手指
+     */
+    fun getTrackPointerIds(event: MotionEventCompat?): List<Int> {
+        return when (event) {
+            currentEvent -> currentTrackPointerIds
+            previousEvent -> previousTrackPointerIds
+            else -> throw NullPointerException("没有匹配的事件")
+        }
+    }
+
+    /**
      * 记录手指id
      */
     fun rememberPointerId() {
         val currentEvent = currentEvent ?: return
         val actionIndex = currentEvent.actionIndex
         when (currentEvent.actionMasked) {
-            MotionEvent.ACTION_DOWN -> {
+            MotionEvent.ACTION_DOWN,  MotionEvent.ACTION_POINTER_DOWN -> {
                 val pointerId = currentEvent.getPointerId(actionIndex)
                 if (!pointerIds.contains(pointerId)) {
                     pointerIds.add(currentEvent.getPointerId(actionIndex))
                 }
-                majorId = pointerIds.last()
-                minorId = MotionEvent.INVALID_POINTER_ID
-            }
-
-            MotionEvent.ACTION_POINTER_DOWN -> {
-                val pointerId = currentEvent.getPointerId(actionIndex)
-                if (!pointerIds.contains(pointerId)) {
-                    pointerIds.add(currentEvent.getPointerId(actionIndex))
-                }
-                majorId = pointerIds[pointerIds.lastIndex - 1]
-                minorId = pointerIds.last()
+                updateTrackPointerIds()
             }
 
             MotionEvent.ACTION_POINTER_UP -> {
                 val removedId = currentEvent.getPointerId(actionIndex)
-                if (removedId == majorId || removedId == minorId) {
-                    for (i in pointerIds.lastIndex downTo 0) {
-                        val id = pointerIds[i]
-                        if (currentEvent.pointerCount == 2) {
-                            //单指松手后，重新追踪最后一根并且不是松开的手指
-                            if (id != removedId) {
-                                majorId = id
-                                minorId = MotionEvent.INVALID_POINTER_ID
-                                break
-                            }
-                        } else if (currentEvent.pointerCount > 2) {
-                            //双指松手后，重新追踪最后两根并且不是松开的手指
-                            if (pointerIds.size > 2) {
-                                if (id != majorId && id != minorId) {
-                                    if (removedId == majorId) {
-                                        //如果松开的是主手指，那么把副手指变成主手指，副手指变成最后一根手指并且不是松开的手指
-                                        majorId = minorId
-                                        minorId = id
-                                    } else if (removedId == minorId) {
-                                        //如果松开的是副手指，那么就把主手指变成副手指，再重新找一根主手指
-                                        minorId = majorId
-                                        majorId = id
-                                    }
-                                    break
-                                }
-                            } else {
-                                //如果只有两根手指，那么重新查找主手指，重置副手指
-                                if (id != removedId) {
-                                    majorId = id
-                                    minorId = MotionEvent.INVALID_POINTER_ID
-                                    break
-                                }
-                            }
-                        }
-                    }
-                }
                 pointerIds.remove(removedId)
+                updateTrackPointerIds()
             }
+        }
+        Log.d(TAG, "rememberPointerId:current: $currentTrackPointerIds")
+    }
+
+    /**
+     * 更新追踪的手指
+     */
+    private fun updateTrackPointerIds() {
+        //总是追踪最末尾的几根手指，例如
+        //pointerIds = [1, 2, 3, 4, 5]
+        //1.
+        //trackPointerIdCount = 2
+        //trackPointerIds = [4, 5]
+        //2.
+        //trackPointerIdCount = 4
+        //trackPointerIds = [2, 3, 4, 5]
+        var startIndex = pointerIds.size - trackPointerIdCount
+        if (startIndex < 0) {
+            startIndex = 0
+        }
+        currentTrackPointerIds.clear()
+        for (index in startIndex until pointerIds.size) {
+            currentTrackPointerIds.add(pointerIds[index])
         }
     }
 
@@ -655,14 +660,11 @@ internal open class BestGestureState {
         previousEvent = null
         isInScaleProgress = false
         isInMoveProgress = false
-        isInAdsorptionProgress = false
         isInSingleFingerProgress = false
         isInMultiFingerProgress = false
         isInLongPressProgress = false
         isInSingleTapScrollProgress = false
         isInDoubleTapScrollingProgress = false
-        majorId = MotionEvent.INVALID_POINTER_ID
-        minorId = MotionEvent.INVALID_POINTER_ID
         pivot.set(0f, 0f)
         touchX = 0f
         touchY = 0f
@@ -674,6 +676,8 @@ internal open class BestGestureState {
         consumeScaleFactor = 0f
         isTriggerDoubleClick = false
         pointerIds.clear()
+        currentTrackPointerIds.clear()
+        previousTrackPointerIds.clear()
         isUsedMultiFinger = false
         isCompletedGesture = true
         offsetTouchX = 0f
