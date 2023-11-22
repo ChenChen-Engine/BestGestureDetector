@@ -130,38 +130,6 @@ internal open class BestGestureState {
     var isInDoubleTapScrollingGiveUpClick = false
 
     /**
-     * 触摸的X点
-     */
-    var touchX: Float = 0f
-        get() {
-            return field - offsetTouchX
-        }
-
-    /**
-     * 触摸的Y点
-     */
-    var touchY: Float = 0f
-        get() {
-            return field - offsetTouchY
-        }
-
-    /**
-     * 触摸的原始X点
-     */
-    var touchRawX: Float = 0f
-        get() {
-            return field - offsetTouchRawX
-        }
-
-    /**
-     * 触摸的原始Y点
-     */
-    var touchRawY: Float = 0f
-        get() {
-            return field - offsetTouchRawY
-        }
-
-    /**
      * 追踪的手指数量，最低数量为2，
      * 单指设置无效，单指只追踪一根手指，多指至少追踪两根手指
      */
@@ -187,26 +155,6 @@ internal open class BestGestureState {
      * 在一次事件中消费掉部分scaleFactor的值
      */
     var consumeScaleFactor = 0f
-
-    /**
-     * 偏移当前触摸的X点，只在当前事件中有效，下次事件将重置
-     */
-    var offsetTouchX = 0f
-
-    /**
-     * 偏移当前触摸的Y点，只在当前事件中有效，下次事件将重置
-     */
-    var offsetTouchY = 0f
-
-    /**
-     * 偏移当前触摸相对屏幕的X点，只在当前事件中有效，下次事件将重置
-     */
-    var offsetTouchRawX = 0f
-
-    /**
-     * 偏移当前触摸相对屏幕的Y点，只在当前事件中有效，下次事件将重置
-     */
-    var offsetTouchRawY = 0f
 
     /**
      * 指定累积移动x轴的值，每累积到该值，触发一次消费，只在本次手势结束前有效，下次手势开始前将重置
@@ -256,14 +204,6 @@ internal open class BestGestureState {
             currentEvent?.recycle()
         }
         currentEvent = event.compat()
-        touchX = currentEvent!!.x
-        touchY = currentEvent!!.y
-        touchRawX = currentEvent!!.rawX
-        touchRawY = currentEvent!!.rawY
-        offsetTouchX = 0f
-        offsetTouchY = 0f
-        offsetTouchRawX = 0f
-        offsetTouchRawY = 0f
     }
 
     /**
@@ -665,10 +605,6 @@ internal open class BestGestureState {
         isInSingleTapScrollProgress = false
         isInDoubleTapScrollingProgress = false
         pivot.set(0f, 0f)
-        touchX = 0f
-        touchY = 0f
-        touchRawX = 0f
-        touchRawY = 0f
         consumeMoveX = 0f
         consumeMoveY = 0f
         consumeRotation = 0f
@@ -679,10 +615,6 @@ internal open class BestGestureState {
         previousTrackPointerIds.clear()
         isUsedMultiFinger = false
         isCompletedGesture = true
-        offsetTouchX = 0f
-        offsetTouchY = 0f
-        offsetTouchRawX = 0f
-        offsetTouchRawY = 0f
         accumulateMoveX = 0f
         accumulateMoveY = 0f
         accumulateRotation = 0f

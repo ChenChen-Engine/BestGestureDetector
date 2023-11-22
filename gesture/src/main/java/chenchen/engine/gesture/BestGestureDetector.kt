@@ -507,35 +507,6 @@ class BestGestureDetector(private val view: View) {
         get() = state.previousEvent?.obtain()
 
     /**
-     * 获取当前触摸的x，相对于父View的位置
-     */
-    val touchX: Float
-        get() = state.touchX
-
-    /**
-     * 获取当前触摸的y，相对于父View的位置
-     */
-    val touchY: Float
-        get() = state.touchY
-
-    /**
-     * 获取当前触摸的x，相对于屏幕的位置
-     */
-    val touchRawX: Float
-        get() = state.touchRawX
-
-    /**
-     * 获取当前触摸的y，相对于屏幕的位置
-     * 已经减去了状态栏和标题栏的高度，这两个高度影响期望的触摸位置，期望是在屏幕内但不包括状态栏和标题栏，而且视图也无法穿过状态栏和标题栏
-     *
-     * [ ] 如果可以穿透状态栏该如何处理
-     */
-    val touchRawY: Float
-        get() {
-            return state.touchRawY - view.statusBarHeight - view.actionBarHeight
-        }
-
-    /**
      * 获取缩放因子，使用方式view.scaleX *= scaleFactor
      */
     val scaleFactor: Float
@@ -867,28 +838,6 @@ class BestGestureDetector(private val view: View) {
      */
     fun setTrackPointerIdCount(count: Int) {
         state.setTrackPointerIdCount(count)
-    }
-
-    /**
-     * 偏移当前触摸点的位置，只对当前事件有效，下次事件将重置偏移量
-     * 该偏移量不影响计算旋转、缩放、平移等操作，只是用于计算当前触摸点的位置
-     * @param xOffset x轴偏移量
-     * @param yOffset y轴偏移量
-     */
-    fun offsetTouchLocation(xOffset: Float, yOffset: Float) {
-        state.offsetTouchX = xOffset
-        state.offsetTouchY = yOffset
-    }
-
-    /**
-     * 偏移当前相对屏幕触摸点的位置，只对当前事件有效，下次事件将重置偏移量，
-     * 该偏移量不影响计算旋转、缩放、平移等操作，只是用于计算当前触摸点的位置
-     * @param xOffset x轴偏移量
-     * @param yOffset y轴偏移量
-     */
-    fun offsetTouchRawLocation(xOffset: Float, yOffset: Float) {
-        state.offsetTouchRawX = xOffset
-        state.offsetTouchRawY = yOffset
     }
 
     /**
