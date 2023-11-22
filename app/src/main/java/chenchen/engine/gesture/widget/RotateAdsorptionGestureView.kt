@@ -10,9 +10,9 @@ import android.view.View
 import chenchen.engine.gesture.BestGestureDetector
 import chenchen.engine.gesture.OnScaleGestureListener
 import chenchen.engine.gesture.OnTouchGestureListener
-import chenchen.engine.gesture.adsorption.rotate.Adsorption
-import chenchen.engine.gesture.adsorption.rotate.Magnet
-import chenchen.engine.gesture.adsorption.rotate.Magnetic
+import chenchen.engine.gesture.adsorption.rotate.RotateAdsorption
+import chenchen.engine.gesture.adsorption.rotate.RotateMagnet
+import chenchen.engine.gesture.adsorption.rotate.RotateMagnetic
 import chenchen.engine.gesture.adsorption.rotate.OnRotateAdsorptionListener
 import chenchen.engine.gesture.adsorption.rotate.RotateAdsorptionGestureDetector
 
@@ -49,14 +49,14 @@ class RotateAdsorptionGestureView : View {
     }
 
     val adsorptionGesture by lazy {
-        val adsorption = Adsorption(
-            Magnetic(this),
+        val adsorption = RotateAdsorption(
+            RotateMagnetic(this),
             arrayListOf(
-                Magnet(0, rRidThreshold = 50), Magnet(45, rRidThreshold = 50),
-                Magnet(90, rRidThreshold = 50), Magnet(135, rRidThreshold = 50),
-                Magnet(180, rRidThreshold = 50), Magnet(225, rRidThreshold = 50),
-                Magnet(270, rRidThreshold = 50), Magnet(315, rRidThreshold = 50),
-                Magnet(360, rRidThreshold = 50)),
+                RotateMagnet(0, rRidThreshold = 50), RotateMagnet(45, rRidThreshold = 50),
+                RotateMagnet(90, rRidThreshold = 50), RotateMagnet(135, rRidThreshold = 50),
+                RotateMagnet(180, rRidThreshold = 50), RotateMagnet(225, rRidThreshold = 50),
+                RotateMagnet(270, rRidThreshold = 50), RotateMagnet(315, rRidThreshold = 50),
+                RotateMagnet(360, rRidThreshold = 50)),
         )
         RotateAdsorptionGestureDetector(adsorption, object : OnRotateAdsorptionListener {
             override fun onBeginAdsorption(detector: RotateAdsorptionGestureDetector): Boolean {

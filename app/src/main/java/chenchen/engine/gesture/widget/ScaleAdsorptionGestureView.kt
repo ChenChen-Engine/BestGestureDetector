@@ -10,9 +10,9 @@ import android.view.View
 import chenchen.engine.gesture.BestGestureDetector
 import chenchen.engine.gesture.OnTouchGestureListener
 import chenchen.engine.gesture.OnScaleGestureListener
-import chenchen.engine.gesture.adsorption.scale.Adsorption
-import chenchen.engine.gesture.adsorption.scale.Magnet
-import chenchen.engine.gesture.adsorption.scale.Magnetic
+import chenchen.engine.gesture.adsorption.scale.ScaleAdsorption
+import chenchen.engine.gesture.adsorption.scale.ScaleMagnet
+import chenchen.engine.gesture.adsorption.scale.ScaleMagnetic
 import chenchen.engine.gesture.adsorption.scale.OnScaleAdsorptionListener
 import chenchen.engine.gesture.adsorption.scale.ScaleAdsorptionGestureDetector
 
@@ -48,13 +48,13 @@ class ScaleAdsorptionGestureView : View {
     }
 
     val adsorptionGesture by lazy {
-        val adsorption = Adsorption(
-            Magnetic(this),
+        val adsorption = ScaleAdsorption(
+            ScaleMagnetic(this),
             arrayListOf(
-                Magnet(0.5f, sRidThreshold = 0.5f), Magnet(0.8f, sRidThreshold = 0.5f),
-                Magnet(1.0f, sRidThreshold = 0.5f), Magnet(1.5f, sRidThreshold = 0.5f),
-                Magnet(2.0f, sRidThreshold = 0.5f), Magnet(2.5f, sRidThreshold = 0.5f),
-                Magnet(3.0f, sRidThreshold = 0.5f), Magnet(4.0f, sRidThreshold = 0.5f),
+                ScaleMagnet(0.5f, sRidThreshold = 0.5f), ScaleMagnet(0.8f, sRidThreshold = 0.5f),
+                ScaleMagnet(1.0f, sRidThreshold = 0.5f), ScaleMagnet(1.5f, sRidThreshold = 0.5f),
+                ScaleMagnet(2.0f, sRidThreshold = 0.5f), ScaleMagnet(2.5f, sRidThreshold = 0.5f),
+                ScaleMagnet(3.0f, sRidThreshold = 0.5f), ScaleMagnet(4.0f, sRidThreshold = 0.5f),
             )
         )
         ScaleAdsorptionGestureDetector(adsorption, object : OnScaleAdsorptionListener {
