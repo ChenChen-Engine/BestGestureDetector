@@ -18,7 +18,7 @@ import kotlin.math.abs
  * @since: 2023/10/13 23:14
  */
 class ScaleAdsorptionGestureDetector(
-    private val adsorption: Adsorption,
+    private val adsorption: ScaleAdsorption,
     private val adsorptionListener: OnScaleAdsorptionListener
 ) : ScaleGestureDetector() {
 
@@ -98,7 +98,7 @@ class ScaleAdsorptionGestureDetector(
         return isInAdsorptionProgress
     }
 
-    private fun Adsorption.analyze(): Float {
+    private fun ScaleAdsorption.analyze(): Float {
         //步骤1.1，如果磁性物体已经被移除，则释放所有记录的内容
         if (!magnetic.target.isAttachedToWindow) {
             release()
@@ -111,8 +111,8 @@ class ScaleAdsorptionGestureDetector(
         if (isAdsorptionScale || isScaleAdsorptionImmunityRegion) {
             return 0f
         }
-        var lastAnalyzeResult: AnalyzeResult? = null
-        val analyzes = arrayListOf<AnalyzeResult>()
+        var lastAnalyzeResult: ScaleAnalyzeResult? = null
+        val analyzes = arrayListOf<ScaleAnalyzeResult>()
         for (magnet in adsorption.magnets) {
             lastAnalyzeResult = analyzeScale(magnet, lastAnalyzeResult)
         }
@@ -132,7 +132,7 @@ class ScaleAdsorptionGestureDetector(
     /**
      * 添加测量结果
      */
-    private fun ArrayList<AnalyzeResult>.addAnalyze(analyze: AnalyzeResult?) {
+    private fun ArrayList<ScaleAnalyzeResult>.addAnalyze(analyze: ScaleAnalyzeResult?) {
         analyze ?: return
         if (isEmpty()) {
             //步骤1.5.1.1 集合为空意味着第一次遇到缩放角度符合吸附条件的，直接记录磁铁
@@ -157,8 +157,8 @@ class ScaleAdsorptionGestureDetector(
     /**
      * 分析最小的缩放角度距离
      */
-    private fun analyzeScale(magnet: Magnet, lastAnalyzeResult: AnalyzeResult?): AnalyzeResult? {
-        var result: AnalyzeResult? = lastAnalyzeResult
+    private fun analyzeScale(magnet: ScaleMagnet, lastAnalyzeResult: ScaleAnalyzeResult?): ScaleAnalyzeResult? {
+        var result: ScaleAnalyzeResult? = lastAnalyzeResult
         val magneticScale = safeScale()
         val distance = when (state.scaleTrack) {
             ScaleTrack.ZoomOut ->
@@ -173,7 +173,7 @@ class ScaleAdsorptionGestureDetector(
                 lastAnalyzeResult == null
                         //或者上次测量的值比这次大，返回这次最新的测量的值
                         || abs(lastAnalyzeResult.distance) > abs(distance) -> {
-                    result = AnalyzeResult(distance, magnet)
+                    result = ScaleAnalyzeResult(distance, magnet)
                 }
             }
         }
@@ -219,7 +219,7 @@ class ScaleAdsorptionGestureDetector(
     /**
      * 只有磁性物体被移除的时候才释放
      */
-    private fun Adsorption.release() {
+    private fun ScaleAdsorption.release() {
         analyzes.clear()
         adsorptionValueAnim?.cancel()
         adsorptionValueAnim = null

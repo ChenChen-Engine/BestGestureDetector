@@ -23,7 +23,7 @@ import kotlin.math.min
  * 移动吸附手势
  */
 class MoveAdsorptionGestureDetector(
-    private val adsorption: Adsorption,
+    private val adsorption: MoveAdsorption,
     private val adsorptionListener: OnMoveAdsorptionListener
 ) : MoveGestureDetector() {
 
@@ -143,7 +143,7 @@ class MoveAdsorptionGestureDetector(
      * 2. 如果多个磁铁在同一个点，以吸附区域最大的磁铁为准，挣脱和免疫也是以最大的为准。
      *
      */
-    private fun Adsorption.analyze(): Point {
+    private fun MoveAdsorption.analyze(): Point {
         //步骤1.1，如果磁性物体已经被移除，则释放所有记录的内容
         if (!magnetic.target.isAttachedToWindow) {
             release()
@@ -151,18 +151,18 @@ class MoveAdsorptionGestureDetector(
         }
         var minXOffset = 0
         var minYOffset = 0
-        var leftAnalyze: AnalyzeResult?
-        var horizontalAnalyze: AnalyzeResult?
-        var rightAnalyze: AnalyzeResult?
-        var topAnalyze: AnalyzeResult?
-        var verticalAnalyze: AnalyzeResult?
-        var bottomAnalyze: AnalyzeResult?
-        val leftAnalyzes = arrayListOf<AnalyzeResult>()
-        val horizontalCenterAnalyzes = arrayListOf<AnalyzeResult>()
-        val rightAnalyzes = arrayListOf<AnalyzeResult>()
-        val topAnalyzes = arrayListOf<AnalyzeResult>()
-        val verticalCenterAnalyzes = arrayListOf<AnalyzeResult>()
-        val bottomAnalyzes = arrayListOf<AnalyzeResult>()
+        var leftAnalyze: MoveAnalyzeResult?
+        var horizontalAnalyze: MoveAnalyzeResult?
+        var rightAnalyze: MoveAnalyzeResult?
+        var topAnalyze: MoveAnalyzeResult?
+        var verticalAnalyze: MoveAnalyzeResult?
+        var bottomAnalyze: MoveAnalyzeResult?
+        val leftAnalyzes = arrayListOf<MoveAnalyzeResult>()
+        val horizontalCenterAnalyzes = arrayListOf<MoveAnalyzeResult>()
+        val rightAnalyzes = arrayListOf<MoveAnalyzeResult>()
+        val topAnalyzes = arrayListOf<MoveAnalyzeResult>()
+        val verticalCenterAnalyzes = arrayListOf<MoveAnalyzeResult>()
+        val bottomAnalyzes = arrayListOf<MoveAnalyzeResult>()
         //1.2 获取磁性物体的绝对坐标
         magnetic.target.getGlobalRect(magneticRect)
         for (magnet in magnets) {
@@ -297,7 +297,7 @@ class MoveAdsorptionGestureDetector(
     /**
      * 添加测量结果
      */
-    private fun ArrayList<AnalyzeResult>.addAnalyze(analyze: AnalyzeResult?) {
+    private fun ArrayList<MoveAnalyzeResult>.addAnalyze(analyze: MoveAnalyzeResult?) {
         analyze ?: return
         if (isEmpty()) {
             //步骤1.5.1.1 集合为空意味着第一次遇到x轴符合吸附条件的，直接记录磁铁
@@ -323,12 +323,12 @@ class MoveAdsorptionGestureDetector(
      * 测量左边吸附距离
      */
     private fun analyzeLeft(
-        magneticRect: Rect, magnetRect: Rect, magnet: Magnet,
+        magneticRect: Rect, magnetRect: Rect, magnet: MoveMagnet,
         alignment: ConstrainedAlignment,
-        lastAnalyzeResult: AnalyzeResult?): AnalyzeResult? {
+        lastAnalyzeResult: MoveAnalyzeResult?): MoveAnalyzeResult? {
         val distance: Int?
         var align: ConstrainedAlignment? = null
-        var result: AnalyzeResult? = lastAnalyzeResult
+        var result: MoveAnalyzeResult? = lastAnalyzeResult
         //磁铁支持左对齐，继续判断磁性物体支持的左对齐方式
         if (Left in magnet.alignments) {
             distance = when (alignment) {
@@ -371,7 +371,7 @@ class MoveAdsorptionGestureDetector(
                     lastAnalyzeResult == null
                             //或者上次测量的值比这次大，返回这次最新的测量的值
                             || abs(lastAnalyzeResult.distance) > abs(distance) -> {
-                        result = AnalyzeResult(distance, align!!, magnet)
+                        result = MoveAnalyzeResult(distance, align!!, magnet)
                     }
                 }
             }
@@ -383,12 +383,12 @@ class MoveAdsorptionGestureDetector(
      * 测量水平居中吸附距离
      */
     private fun analyzeHorizontalCenter(
-        magneticRect: Rect, magnetRect: Rect, magnet: Magnet,
+        magneticRect: Rect, magnetRect: Rect, magnet: MoveMagnet,
         alignment: ConstrainedAlignment,
-        lastAnalyzeResult: AnalyzeResult?): AnalyzeResult? {
+        lastAnalyzeResult: MoveAnalyzeResult?): MoveAnalyzeResult? {
         val distance: Int?
         var align: ConstrainedAlignment? = null
-        var result: AnalyzeResult? = lastAnalyzeResult
+        var result: MoveAnalyzeResult? = lastAnalyzeResult
         //磁铁支持水平居中对齐(垂直线)，继续判断磁性物体支持的水平居中对齐方式
         if (HorizontalCenter in magnet.alignments) {
             distance = when (alignment) {
@@ -430,7 +430,7 @@ class MoveAdsorptionGestureDetector(
                     lastAnalyzeResult == null
                             //或者上次测量的值比这次大，返回这次最新的测量的值
                             || abs(lastAnalyzeResult.distance) > abs(distance) -> {
-                        result = AnalyzeResult(distance, align!!, magnet)
+                        result = MoveAnalyzeResult(distance, align!!, magnet)
                     }
                 }
             }
@@ -442,12 +442,12 @@ class MoveAdsorptionGestureDetector(
      * 测量右边吸附距离
      */
     private fun analyzeRight(
-        magneticRect: Rect, magnetRect: Rect, magnet: Magnet,
+        magneticRect: Rect, magnetRect: Rect, magnet: MoveMagnet,
         alignment: ConstrainedAlignment,
-        lastAnalyzeResult: AnalyzeResult?): AnalyzeResult? {
+        lastAnalyzeResult: MoveAnalyzeResult?): MoveAnalyzeResult? {
         val distance: Int?
         var align: ConstrainedAlignment? = null
-        var result: AnalyzeResult? = lastAnalyzeResult
+        var result: MoveAnalyzeResult? = lastAnalyzeResult
         //磁铁支持右对齐，继续判断磁性物体支持的右对齐方式
         if (Right in magnet.alignments) {
             distance = when (alignment) {
@@ -489,7 +489,7 @@ class MoveAdsorptionGestureDetector(
                     lastAnalyzeResult == null
                             //或者上次测量的值比这次大，返回这次最新的测量的值
                             || abs(lastAnalyzeResult.distance) > abs(distance) -> {
-                        result = AnalyzeResult(distance, align!!, magnet)
+                        result = MoveAnalyzeResult(distance, align!!, magnet)
                     }
                 }
             }
@@ -501,12 +501,12 @@ class MoveAdsorptionGestureDetector(
      * 测量顶部吸附距离
      */
     private fun analyzeTop(
-        magneticRect: Rect, magnetRect: Rect, magnet: Magnet,
+        magneticRect: Rect, magnetRect: Rect, magnet: MoveMagnet,
         alignment: ConstrainedAlignment,
-        lastAnalyzeResult: AnalyzeResult?): AnalyzeResult? {
+        lastAnalyzeResult: MoveAnalyzeResult?): MoveAnalyzeResult? {
         val distance: Int?
         var align: ConstrainedAlignment? = null
-        var result: AnalyzeResult? = lastAnalyzeResult
+        var result: MoveAnalyzeResult? = lastAnalyzeResult
         //磁铁支持顶部对齐，继续判断磁性物体支持的顶部对齐方式
         if (Top in magnet.alignments) {
             distance = when (alignment) {
@@ -548,7 +548,7 @@ class MoveAdsorptionGestureDetector(
                     lastAnalyzeResult == null
                             //或者上次测量的值比这次大，返回这次最新的测量的值
                             || abs(lastAnalyzeResult.distance) > abs(distance) -> {
-                        result = AnalyzeResult(distance, align!!, magnet)
+                        result = MoveAnalyzeResult(distance, align!!, magnet)
                     }
                 }
             }
@@ -561,12 +561,12 @@ class MoveAdsorptionGestureDetector(
      * 测量垂直居中吸附距离
      */
     private fun analyzeVerticalCenter(
-        magneticRect: Rect, magnetRect: Rect, magnet: Magnet,
+        magneticRect: Rect, magnetRect: Rect, magnet: MoveMagnet,
         alignment: ConstrainedAlignment,
-        lastAnalyzeResult: AnalyzeResult?): AnalyzeResult? {
+        lastAnalyzeResult: MoveAnalyzeResult?): MoveAnalyzeResult? {
         val distance: Int?
         var align: ConstrainedAlignment? = null
-        var result: AnalyzeResult? = lastAnalyzeResult
+        var result: MoveAnalyzeResult? = lastAnalyzeResult
         //磁铁支持垂直居中对齐(水平线)，继续判断磁性物体支持的垂直居中对齐方式
         if (VerticalCenter in magnet.alignments) {
             distance = when (alignment) {
@@ -608,7 +608,7 @@ class MoveAdsorptionGestureDetector(
                     lastAnalyzeResult == null
                             //或者上次测量的值比这次大，返回这次最新的测量的值
                             || abs(lastAnalyzeResult.distance) > abs(distance) -> {
-                        result = AnalyzeResult(distance, align!!, magnet)
+                        result = MoveAnalyzeResult(distance, align!!, magnet)
                     }
                 }
             }
@@ -620,12 +620,12 @@ class MoveAdsorptionGestureDetector(
      * 测量底部吸附距离
      */
     private fun analyzeBottom(
-        magneticRect: Rect, magnetRect: Rect, magnet: Magnet,
+        magneticRect: Rect, magnetRect: Rect, magnet: MoveMagnet,
         alignment: ConstrainedAlignment,
-        lastAnalyzeResult: AnalyzeResult?): AnalyzeResult? {
+        lastAnalyzeResult: MoveAnalyzeResult?): MoveAnalyzeResult? {
         val distance: Int?
         var align: ConstrainedAlignment? = null
-        var result: AnalyzeResult? = lastAnalyzeResult
+        var result: MoveAnalyzeResult? = lastAnalyzeResult
         //磁铁支持底部对齐，继续判断磁性物体支持的底部对齐方式
         if (Bottom in magnet.alignments) {
             distance = when (alignment) {
@@ -667,7 +667,7 @@ class MoveAdsorptionGestureDetector(
                     lastAnalyzeResult == null
                             //或者上次测量的值比这次大，返回这次最新的测量的值
                             || abs(lastAnalyzeResult.distance) > abs(distance) -> {
-                        result = AnalyzeResult(distance, align!!, magnet)
+                        result = MoveAnalyzeResult(distance, align!!, magnet)
                     }
                 }
             }
@@ -728,7 +728,7 @@ class MoveAdsorptionGestureDetector(
     /**
      * 只有磁性物体被移除的时候才释放
      */
-    private fun Adsorption.release() {
+    private fun MoveAdsorption.release() {
         topAnalyzes.clear()
         verticalCenterAnalyzes.clear()
         bottomAnalyzes.clear()

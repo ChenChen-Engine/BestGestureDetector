@@ -10,15 +10,15 @@ import kotlin.math.abs
  * @author: chenchen
  * @since: 2023/10/16 17:47
  */
-class Adsorption(
+class ScaleAdsorption(
     /**
      * 磁性物体
      */
-    val magnetic: Magnetic,
+    val magnetic: ScaleMagnetic,
     /**
      * 磁铁列表
      */
-    val magnets: List<Magnet>,
+    val magnets: List<ScaleMagnet>,
 ) {
     /**
      * 吸附动画
@@ -28,7 +28,7 @@ class Adsorption(
     /**
      * 吸住的磁铁，正常情况只有1个，如果有多个，必然是相同的值
      */
-    internal var analyzes = ArrayList<AnalyzeResult>()
+    internal var analyzes = ArrayList<ScaleAnalyzeResult>()
 
     /**
      * 上次被吸住的缩放轨迹
@@ -85,14 +85,14 @@ class Adsorption(
     /**
      * 获取被吸住的磁铁记录
      */
-    private fun getMaxAdsorptionMeasureResult(measures: List<AnalyzeResult>): AnalyzeResult? {
+    private fun getMaxAdsorptionMeasureResult(measures: List<ScaleAnalyzeResult>): ScaleAnalyzeResult? {
         return measures.maxByOrNull { it.magnet.sMagnetismThreshold }
     }
 
     /**
      * 获取磁性最大的磁铁
      */
-    private fun getMaxAdsorptionThresholdMagnet(measures: List<AnalyzeResult>): Magnet? {
+    private fun getMaxAdsorptionThresholdMagnet(measures: List<ScaleAnalyzeResult>): ScaleMagnet? {
         return getMaxAdsorptionMeasureResult(measures)?.magnet
     }
 
@@ -218,7 +218,7 @@ class Adsorption(
 /**
  * 磁性物体
  */
-class Magnetic(
+class ScaleMagnetic(
     /**
      * 有磁性的View，可以被磁吸
      */
@@ -228,7 +228,7 @@ class Magnetic(
 /**
  * 磁铁
  */
-class Magnet(
+class ScaleMagnet(
     /**
      * 磁铁的约束方式
      */
@@ -250,7 +250,7 @@ class Magnet(
 /**
  * 测量结果
  */
-data class AnalyzeResult(
+data class ScaleAnalyzeResult(
     /**
      * 磁性物体与磁铁的角度距离
      */
@@ -258,5 +258,5 @@ data class AnalyzeResult(
     /**
      * 磁铁
      */
-    val magnet: Magnet
+    val magnet: ScaleMagnet
 )

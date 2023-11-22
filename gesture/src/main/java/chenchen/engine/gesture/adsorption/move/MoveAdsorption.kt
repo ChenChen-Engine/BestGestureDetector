@@ -15,15 +15,15 @@ import kotlin.math.abs
  * @since: 2023/4/19 18:20
  * @Description: 吸附
  */
-data class Adsorption(
+data class MoveAdsorption(
     /**
      * 磁性物体
      */
-    val magnetic: Magnetic,
+    val magnetic: MoveMagnetic,
     /**
      * 磁铁列表
      */
-    val magnets: List<Magnet>,
+    val magnets: List<MoveMagnet>,
 ) {
 
     /**
@@ -44,32 +44,32 @@ data class Adsorption(
     /**
      * 吸住左边的磁铁
      */
-    internal var leftAnalyzes = ArrayList<AnalyzeResult>()
+    internal var leftAnalyzes = ArrayList<MoveAnalyzeResult>()
 
     /**
      * 吸住水平居中的磁铁
      */
-    internal var horizontalCenterAnalyzes = ArrayList<AnalyzeResult>()
+    internal var horizontalCenterAnalyzes = ArrayList<MoveAnalyzeResult>()
 
     /**
      * 吸住右边的磁铁
      */
-    internal var rightAnalyzes = ArrayList<AnalyzeResult>()
+    internal var rightAnalyzes = ArrayList<MoveAnalyzeResult>()
 
     /**
      * 吸住顶部的磁铁
      */
-    internal var topAnalyzes = ArrayList<AnalyzeResult>()
+    internal var topAnalyzes = ArrayList<MoveAnalyzeResult>()
 
     /**
      * 吸住垂直居中的磁铁
      */
-    internal var verticalCenterAnalyzes = ArrayList<AnalyzeResult>()
+    internal var verticalCenterAnalyzes = ArrayList<MoveAnalyzeResult>()
 
     /**
      * 吸住底部的磁铁
      */
-    internal var bottomAnalyzes = ArrayList<AnalyzeResult>()
+    internal var bottomAnalyzes = ArrayList<MoveAnalyzeResult>()
 
     /**
      * 上次被吸住的水平运动轨迹
@@ -178,8 +178,8 @@ data class Adsorption(
     /**
      * 获取被吸住的磁铁记录
      */
-    private fun getMaxAdsorptionMeasureResult(vararg measures: List<AnalyzeResult>): AnalyzeResult? {
-        val maxMeasures = arrayListOf<AnalyzeResult>()
+    private fun getMaxAdsorptionMeasureResult(vararg measures: List<MoveAnalyzeResult>): MoveAnalyzeResult? {
+        val maxMeasures = arrayListOf<MoveAnalyzeResult>()
         for (measure in measures) {
             measure.filter { it.magnet.target.isAttachedToWindow }
                 .maxByOrNull { it.magnet.hMagnetismThreshold }
@@ -191,7 +191,7 @@ data class Adsorption(
     /**
      * 获取磁性最大的磁铁
      */
-    private fun getMaxAdsorptionThresholdMagnet(vararg measures: List<AnalyzeResult>): Magnet? {
+    private fun getMaxAdsorptionThresholdMagnet(vararg measures: List<MoveAnalyzeResult>): MoveMagnet? {
         return getMaxAdsorptionMeasureResult(*measures)?.magnet
     }
 
@@ -260,7 +260,7 @@ data class Adsorption(
             else -> 0
         }.apply {
             magneticRect.setEmpty()
-            this@Adsorption.magnetRect.setEmpty()
+            this@MoveAdsorption.magnetRect.setEmpty()
         }
     }
 
@@ -293,7 +293,7 @@ data class Adsorption(
             else -> 0
         }.apply {
             magneticRect.setEmpty()
-            this@Adsorption.magnetRect.setEmpty()
+            this@MoveAdsorption.magnetRect.setEmpty()
         }
     }
 
@@ -439,7 +439,7 @@ data class Adsorption(
 /**
  * 磁性物体
  */
-class Magnetic(
+class MoveMagnetic(
     /**
      * 有磁性的View，可以被磁吸
      */
@@ -453,7 +453,7 @@ class Magnetic(
 /**
  * 磁铁
  */
-class Magnet(
+class MoveMagnet(
     /**
      * 磁铁View，可以磁吸磁性物体
      */
@@ -492,7 +492,7 @@ class Magnet(
 /**
  * 测量结果
  */
-data class AnalyzeResult(
+data class MoveAnalyzeResult(
     /**
      * 磁性物体与磁铁的距离
      */
@@ -504,5 +504,5 @@ data class AnalyzeResult(
     /**
      * 磁铁
      */
-    val magnet: Magnet
+    val magnet: MoveMagnet
 )

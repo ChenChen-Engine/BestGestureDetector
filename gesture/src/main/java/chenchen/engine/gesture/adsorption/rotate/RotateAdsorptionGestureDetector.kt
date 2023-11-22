@@ -18,7 +18,7 @@ import kotlin.math.abs
  * @since: 2023/10/13 23:14
  */
 class RotateAdsorptionGestureDetector(
-    private val adsorption: Adsorption,
+    private val adsorption: RotateAdsorption,
     private val adsorptionListener: OnRotateAdsorptionListener
 ) : RotateGestureDetector() {
 
@@ -97,7 +97,7 @@ class RotateAdsorptionGestureDetector(
         return isInAdsorptionProgress
     }
 
-    private fun Adsorption.analyze(): Int {
+    private fun RotateAdsorption.analyze(): Int {
         //步骤1.1，如果磁性物体已经被移除，则释放所有记录的内容
         if (!magnetic.target.isAttachedToWindow) {
             release()
@@ -110,8 +110,8 @@ class RotateAdsorptionGestureDetector(
         if (isAdsorptionRotation || isRotationAdsorptionImmunityRegion) {
             return 0
         }
-        var lastAnalyzeResult: AnalyzeResult? = null
-        val analyzes = arrayListOf<AnalyzeResult>()
+        var lastAnalyzeResult: RotateAnalyzeResult? = null
+        val analyzes = arrayListOf<RotateAnalyzeResult>()
         for (magnet in adsorption.magnets) {
             lastAnalyzeResult = analyzeRotation(magnet, lastAnalyzeResult)
         }
@@ -131,7 +131,7 @@ class RotateAdsorptionGestureDetector(
     /**
      * 添加测量结果
      */
-    private fun ArrayList<AnalyzeResult>.addAnalyze(analyze: AnalyzeResult?) {
+    private fun ArrayList<RotateAnalyzeResult>.addAnalyze(analyze: RotateAnalyzeResult?) {
         analyze ?: return
         if (isEmpty()) {
             //步骤1.5.1.1 集合为空意味着第一次遇到旋转角度符合吸附条件的，直接记录磁铁
@@ -156,8 +156,8 @@ class RotateAdsorptionGestureDetector(
     /**
      * 分析最小的旋转角度距离
      */
-    private fun analyzeRotation(magnet: Magnet, lastAnalyzeResult: AnalyzeResult?): AnalyzeResult? {
-        var result: AnalyzeResult? = lastAnalyzeResult
+    private fun analyzeRotation(magnet: RotateMagnet, lastAnalyzeResult: RotateAnalyzeResult?): RotateAnalyzeResult? {
+        var result: RotateAnalyzeResult? = lastAnalyzeResult
         val magneticRotation = safeRotation(adsorption.magnetic.target.rotation)
         val distance = when (state.rotationTrack) {
             RotationTrack.Anticlockwise ->
@@ -172,7 +172,7 @@ class RotateAdsorptionGestureDetector(
                 lastAnalyzeResult == null
                         //或者上次测量的值比这次大，返回这次最新的测量的值
                         || abs(lastAnalyzeResult.distance) > abs(distance) -> {
-                    result = AnalyzeResult(distance, magnet)
+                    result = RotateAnalyzeResult(distance, magnet)
                 }
             }
         }
@@ -216,7 +216,7 @@ class RotateAdsorptionGestureDetector(
     /**
      * 只有磁性物体被移除的时候才释放
      */
-    private fun Adsorption.release() {
+    private fun RotateAdsorption.release() {
         analyzes.clear()
         adsorptionValueAnim?.cancel()
         adsorptionValueAnim = null
