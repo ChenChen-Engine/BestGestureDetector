@@ -577,8 +577,12 @@ class BestGestureDetector(private val view: View) {
      */
     private fun calculateScaleFactor(): Float {
         return (if (state.isInMultiFingerProgress) {
-            getMultiFingerDistance(state.currentEvent!!) /
-                    getMultiFingerDistance(state.previousEvent!!)
+            if (state.isInScaleProgress) {
+                getMultiFingerDistance(state.currentEvent!!) /
+                        getMultiFingerDistance(state.previousEvent!!)
+            } else {
+                1f
+            }
         } else {
             getSingleFingerDistance(state.currentEvent!!) /
                     getSingleFingerDistance(state.previousEvent!!)
@@ -590,8 +594,12 @@ class BestGestureDetector(private val view: View) {
      */
     private fun calculateRotation(): Float {
         return if (state.isInMultiFingerProgress) {
-            getMultiFingerRotation(state.currentEvent!!) -
-                    getMultiFingerRotation(state.previousEvent!!)
+            if (state.isInRotateProgress) {
+                getMultiFingerRotation(state.currentEvent!!) -
+                        getMultiFingerRotation(state.previousEvent!!)
+            } else {
+                0f
+            }
         } else {
             getSingleFingerRotation(state.currentEvent!!) -
                     getSingleFingerRotation(state.previousEvent!!)
@@ -603,8 +611,12 @@ class BestGestureDetector(private val view: View) {
      */
     private fun calculateMoveX(): Float {
         val value = if (state.isInMultiFingerProgress) {
-            getMultiFingerMidPoint(state.currentEvent!!).x -
-                    getMultiFingerMidPoint(state.previousEvent!!).x
+            if (state.isInMoveProgress) {
+                getMultiFingerMidPoint(state.currentEvent!!).x -
+                        getMultiFingerMidPoint(state.previousEvent!!).x
+            } else {
+                0f
+            }
         } else {
             val currentMajorId = state.getTrackPointerIds(state.currentEvent)
                 .firstOrNull() ?: return 0f
@@ -627,8 +639,12 @@ class BestGestureDetector(private val view: View) {
      */
     private fun calculateMoveY(): Float {
         val value = if (state.isInMultiFingerProgress) {
-            getMultiFingerMidPoint(state.currentEvent!!).y -
-                    getMultiFingerMidPoint(state.previousEvent!!).y
+            if (state.isInMoveProgress) {
+                getMultiFingerMidPoint(state.currentEvent!!).y -
+                        getMultiFingerMidPoint(state.previousEvent!!).y
+            } else {
+                0f
+            }
         } else {
             val currentMajorId = state.getTrackPointerIds(state.currentEvent)
                 .firstOrNull() ?: return 0f
@@ -838,7 +854,7 @@ class BestGestureDetector(private val view: View) {
     /**
      * 获取当前事件原始的焦点，焦点指的是所有手指的中间
      */
-    fun getRawFocus(event: MotionEventCompat):PointF{
+    fun getRawFocus(event: MotionEventCompat): PointF {
         val focus = getMultiFingerMidPoint(event)
         focus.y -= view.statusBarHeight - view.actionBarHeight
         return focus
