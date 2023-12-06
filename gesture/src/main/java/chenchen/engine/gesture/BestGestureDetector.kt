@@ -86,6 +86,7 @@ class BestGestureDetector(private val view: View) {
                 touchListener?.provideRawPivot(state.pivot)
                 onDown(state.currentEvent!!).apply {
                     state.rememberPointerId()
+                    state.rememberPreviousEvent()
                 }
             }
             MotionEvent.ACTION_POINTER_DOWN -> {
