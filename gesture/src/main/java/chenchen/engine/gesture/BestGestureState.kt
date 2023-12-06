@@ -1,7 +1,6 @@
 package chenchen.engine.gesture
 
 import android.graphics.PointF
-import android.util.Log
 import android.view.MotionEvent
 import chenchen.engine.gesture.compat.MotionEventCompat
 import chenchen.engine.gesture.compat.MotionEventCompat.Companion.compat
@@ -288,7 +287,7 @@ internal open class BestGestureState {
         val currentEvent = currentEvent ?: return
         val actionIndex = currentEvent.actionIndex
         when (currentEvent.actionMasked) {
-            MotionEvent.ACTION_DOWN,  MotionEvent.ACTION_POINTER_DOWN -> {
+            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
                 val pointerId = currentEvent.getPointerId(actionIndex)
                 if (!pointerIds.contains(pointerId)) {
                     pointerIds.add(currentEvent.getPointerId(actionIndex))
@@ -326,6 +325,42 @@ internal open class BestGestureState {
         }
     }
 
+    /**
+     * 设置累积移动值
+     */
+    fun accumulateMoveX(value: Float) {
+        require(value > 0) { "设置BestGestureDetector.accumulateMoveX()的值必须大于0, value:${value}" }
+        accumulateMoveX = value
+        rememberAccumulateMoveX = 0f
+    }
+
+    /**
+     * 设置累积移动值
+     */
+    fun accumulateMoveY(value: Float) {
+        require(value > 0) { "设置BestGestureDetector.accumulateMoveY()的值必须大于0, value:${value}" }
+        accumulateMoveY = value
+        rememberAccumulateMoveY = 0f
+    }
+
+    /**
+     * 设置累积旋转值
+     */
+    fun accumulateRotation(value: Float) {
+        require(value > 0) { "设置BestGestureDetector.accumulateRotation()的值必须大于0, value:${value}" }
+        accumulateRotation = value
+        rememberAccumulateRotation = 0f
+    }
+
+    /**
+     * 记录累积缩放值
+     */
+    fun accumulateScale(value: Float) {
+        require(value > 0) { "设置BestGestureDetector.accumulateScale()的值必须大于0, value:${value}" }
+        accumulateScale = value
+        rememberAccumulateScale = 0f
+    }
+
 
     /**
      * 记录移动x轴手势的累积值，记录到一定值就会消费
@@ -357,6 +392,34 @@ internal open class BestGestureState {
             return
         }
         this.rememberAccumulateScale += scale - 1f
+    }
+
+    /**
+     * 是否是累积消费移动X模式
+     */
+    fun isAccumulateMoveXMode(): Boolean {
+        return accumulateMoveX > 0
+    }
+
+    /**
+     * 是否是累积消费移动Y模式
+     */
+    fun isAccumulateMoveYMode(): Boolean {
+        return accumulateMoveY > 0
+    }
+
+    /**
+     * 是否是累积消费旋转模式
+     */
+    fun isAccumulateRotationMode(): Boolean {
+        return accumulateRotation > 0
+    }
+
+    /**
+     * 是否是累积消费缩放模式
+     */
+    fun isAccumulateScaleMode(): Boolean {
+        return accumulateScale > 0
     }
 
     /**

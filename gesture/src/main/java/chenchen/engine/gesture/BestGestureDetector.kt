@@ -279,7 +279,7 @@ class BestGestureDetector(private val view: View) {
      */
     private fun onHandleMultiPointerMove(): Boolean {
         state.rememberAccumulateMove(calculateMoveX(), calculateMoveY())
-        if (state.canConsumeAccumulateMoveX() || state.canConsumeAccumulateMoveY()) {
+        if (state.isAccumulateMoveXMode() || state.isAccumulateMoveYMode()) {
             while (state.canConsumeAccumulateMoveX() || state.canConsumeAccumulateMoveY()) {
                 state.isInMoveProgress = moveListener!!.onMove(this)
                 state.consumeAccumulateMoveX()
@@ -300,7 +300,7 @@ class BestGestureDetector(private val view: View) {
      */
     private fun onHandleMultiPointerRotation(): Boolean {
         state.rememberAccumulateRotation(calculateRotation())
-        if (state.canConsumeAccumulateRotation()) {
+        if (state.isAccumulateRotationMode()) {
             while (state.canConsumeAccumulateRotation()) {
                 state.isInRotateProgress = rotateListener!!.onRotate(this)
                 state.consumeAccumulateRotation()
@@ -320,7 +320,7 @@ class BestGestureDetector(private val view: View) {
      */
     private fun onHandleMultiPointerScale(): Boolean {
         state.rememberAccumulateScale(calculateScaleFactor())
-        if (state.canConsumeAccumulateScale()) {
+        if (state.isAccumulateScaleMode()) {
             while (state.canConsumeAccumulateScale()) {
                 state.isInScaleProgress = scaleListener!!.onScale(this)
                 state.consumeAccumulateScale()
@@ -345,8 +345,8 @@ class BestGestureDetector(private val view: View) {
         state.rememberAccumulateRotation(calculateRotation())
         state.rememberAccumulateScale(calculateScaleFactor())
         //判断能否消费累积值
-        if (state.canConsumeAccumulateMoveX() || state.canConsumeAccumulateMoveY()
-            || state.canConsumeAccumulateRotation() || state.canConsumeAccumulateScale()) {
+        if (state.isAccumulateMoveXMode() || state.isAccumulateMoveYMode()
+            || state.isAccumulateRotationMode() || state.isAccumulateScaleMode()) {
             //循环消费累积值
             while (state.canConsumeAccumulateMoveX() || state.canConsumeAccumulateMoveY()
                 || state.canConsumeAccumulateRotation() || state.canConsumeAccumulateScale()) {
@@ -516,7 +516,7 @@ class BestGestureDetector(private val view: View) {
         }
 
     /**
-     * 获取旋转角度，使用方式view.rotation -= rotation
+     * 获取旋转角度，使用方式view.rotation += rotation
      */
     val rotation: Float
         get() {
@@ -875,7 +875,7 @@ class BestGestureDetector(private val view: View) {
      * @param value 累积移动x轴的值，必须是大于0的正值，无论是左滑还是右滑只要超过这个值才会回调
      */
     fun accumulateMoveX(value: Float) {
-        state.accumulateMoveX = value
+        state.accumulateMoveX(value)
     }
 
     /**
@@ -885,7 +885,7 @@ class BestGestureDetector(private val view: View) {
      * @param value 累积移动y轴的值，必须是大于0的正值，无论是上滑还是下滑，只要超过这个值才会回调
      */
     fun accumulateMoveY(value: Float) {
-        state.accumulateMoveY = value
+        state.accumulateMoveY(value)
     }
 
     /**
@@ -895,7 +895,7 @@ class BestGestureDetector(private val view: View) {
      * @param value 累积旋转的值，必须是大于0的正值，无论是左旋转还是右旋转，只要超过这个值才会回调
      */
     fun accumulateRotation(value: Float) {
-        state.accumulateRotation = value
+        state.accumulateRotation(value)
     }
 
     /**
@@ -905,7 +905,7 @@ class BestGestureDetector(private val view: View) {
      * @param value 累积缩放的值，必须是大于0的正值，无论是放大还是缩小，只要超过这个值才会回调
      */
     fun accumulateScale(value: Float) {
-        state.accumulateScale = value
+        state.accumulateScale(value)
     }
 
     /**
