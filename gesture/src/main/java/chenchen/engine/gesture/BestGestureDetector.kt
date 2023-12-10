@@ -836,8 +836,8 @@ class BestGestureDetector private constructor(
      * 单指设置无效，单指只追踪一根手指，多指至少追踪两根手指
      * @param count 手指数量，必须>=2
      */
-    fun setTrackPointerIdCount(count: Int) {
-        state.setTrackPointerIdCount(count)
+    fun setTrackPointerCount(count: Int) {
+        state.rememberTrackPointerIdCount(count)
     }
 
     /**

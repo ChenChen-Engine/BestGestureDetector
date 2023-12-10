@@ -268,7 +268,7 @@ internal data class BestGestureState(
      * 单指设置无效，单指只追踪一根手指，多指至少追踪两根手指
      * @param count 手指数量，必须>=2
      */
-    fun setTrackPointerIdCount(count: Int) {
+    fun rememberTrackPointerIdCount(count: Int) {
         trackPointerIdCount = max(count, 2)
         while (currentTrackPointerIds.size > trackPointerIdCount) {
             currentTrackPointerIds.removeLastOrNull()
