@@ -90,9 +90,6 @@ class MotionEventCompat(val event: MotionEvent) {
     val actionMasked: Int
         get() = event.actionMasked
 
-    val actionButton: Int
-        get() = event.actionButton
-
     fun getPointerId(pointerIndex: Int): Int {
         return event.getPointerId(pointerIndex)
     }
@@ -150,10 +147,6 @@ class MotionEventCompat(val event: MotionEvent) {
     }
 
     fun transform(matrix: Matrix) {
-        event.transform(matrix)
-    }
-
-    fun applyTransform(matrix: Matrix) {
         event.transform(matrix)
     }
 

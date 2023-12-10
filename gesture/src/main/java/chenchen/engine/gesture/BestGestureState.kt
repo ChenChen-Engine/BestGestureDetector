@@ -1,5 +1,6 @@
 package chenchen.engine.gesture
 
+import android.graphics.Matrix
 import android.graphics.PointF
 import android.os.Build
 import android.view.MotionEvent
@@ -367,7 +368,6 @@ internal data class BestGestureState(
         rememberAccumulateScale = 0f
     }
 
-
     /**
      * 记录移动x轴手势的累积值，记录到一定值就会消费
      */
@@ -654,6 +654,96 @@ internal data class BestGestureState(
         consumeMoveY = 0f
         consumeRotation = 0f
         consumeScaleFactor = 0f
+    }
+
+    /**
+     * 设置开始事件的绝对位置
+     */
+    fun setStartEventLocation(x: Float, y: Float) {
+        startEvent?.setLocation(x, y)
+    }
+
+    /**
+     * 设置当前事件的绝对位置
+     */
+    fun setCurrentEventLocation(x: Float, y: Float) {
+        startEvent?.setLocation(x, y)
+    }
+
+    /**
+     * 设置上一个事件的绝对位置
+     */
+    fun setPreviousEventLocation(x: Float, y: Float) {
+        startEvent?.setLocation(x, y)
+    }
+
+    /**
+     * 设置所有事件的绝对位置
+     */
+    fun setAllEventLocation(x: Float, y: Float){
+        setStartEventLocation(x,y)
+        setCurrentEventLocation(x,y)
+        setPreviousEventLocation(x,y)
+    }
+
+    /**
+     * 给开始事件设置偏移量
+     */
+    fun setStartEventOffsetLocation(x: Float, y: Float) {
+        startEvent?.offsetLocation(x, y)
+    }
+
+    /**
+     * 给当前事件设置偏移量
+     */
+    fun setCurrentEventOffsetLocation(x: Float, y: Float) {
+        currentEvent?.offsetLocation(x, y)
+    }
+
+    /**
+     * 给上一个事件设置偏移量
+     */
+    fun setPreviousEventOffsetLocation(x: Float, y: Float) {
+        previousEvent?.offsetLocation(x, y)
+    }
+
+    /**
+     * 给所有事件设置偏移量
+     */
+    fun setAllEventOffsetLocation(x: Float, y: Float) {
+        setStartEventOffsetLocation(x, y)
+        setCurrentEventOffsetLocation(x, y)
+        setPreviousEventOffsetLocation(x, y)
+    }
+
+    /**
+     * 给开始事件设置变换
+     */
+    fun transformStartEvent(matrix: Matrix) {
+        startEvent?.transform(matrix)
+    }
+
+    /**
+     * 给当前事件设置变换
+     */
+    fun transformCurrentEvent(matrix: Matrix) {
+        currentEvent?.transform(matrix)
+    }
+
+    /**
+     * 给上一个事件设置变换
+     */
+    fun transformPreviousEvent(matrix: Matrix) {
+        previousEvent?.transform(matrix)
+    }
+
+    /**
+     * 给所有事件设置变换
+     */
+    fun transformAllEvent(matrix: Matrix) {
+        transformStartEvent(matrix)
+        transformCurrentEvent(matrix)
+        transformPreviousEvent(matrix)
     }
 
     /**

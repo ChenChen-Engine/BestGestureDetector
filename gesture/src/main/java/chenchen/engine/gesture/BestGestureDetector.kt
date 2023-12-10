@@ -2,6 +2,7 @@ package chenchen.engine.gesture
 
 import android.app.Activity
 import android.content.Context
+import android.graphics.Matrix
 import android.graphics.PointF
 import android.view.GestureDetector
 import android.view.MotionEvent
@@ -30,10 +31,11 @@ import kotlin.math.sqrt
  * [-] 双击
  * [ ] 双击提供多段放大处理
  * [ ] 手势触摸放大或缩小到一定程度松开时提供还原
- * [ ] 旋转提供每45°吸附处理
+ * [-] 放大吸附
+ * [-] 旋转吸附
  * [-] 移动吸附
  * [ ] 松手吸附
- * [-] 提供投掷处理
+ * [ ] 提供投掷处理
  * [ ] 提供Matrix
  * ```
  * Bug:
@@ -50,10 +52,10 @@ import kotlin.math.sqrt
  *  constructor(context: Context?) : super(context, null)
  *  constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
  *
- *  val bestGesture by lazy { BestGestureDetector(this) }
+ *  val bestGesture by lazy { BestGestureDetector(context) }
  *
  *  override fun onTouchEvent(event: MotionEvent): Boolean {
- *      return bestGesture.onTouchEvent(event)
+ *      return bestGesture.onTouchEvent(this, event)
  *  }
  * }
  * ```
@@ -906,6 +908,90 @@ class BestGestureDetector private constructor(
      */
     fun accumulateScale(value: Float) {
         state.accumulateScale(value)
+    }
+
+    /**
+     * 设置开始事件的绝对位置
+     */
+    fun setStartEventLocation(x: Float, y: Float) {
+        state.setStartEventLocation(x, y)
+    }
+
+    /**
+     * 设置当前事件的绝对位置
+     */
+    fun setCurrentEventLocation(x: Float, y: Float) {
+        state.setCurrentEventLocation(x, y)
+    }
+
+    /**
+     * 设置上一个事件的绝对位置
+     */
+    fun setPreviousEventLocation(x: Float, y: Float) {
+        state.setPreviousEventLocation(x, y)
+    }
+
+    /**
+     * 设置所有事件的绝对位置
+     */
+    fun setAllEventLocation(x: Float, y: Float){
+        state.setAllEventLocation(x, y)
+    }
+
+    /**
+     * 给开始事件设置偏移量
+     */
+    fun setStartEventOffsetLocation(x: Float, y: Float) {
+        state.setStartEventOffsetLocation(x, y)
+    }
+
+    /**
+     * 给当前事件设置偏移量
+     */
+    fun setCurrentEventOffsetLocation(x: Float, y: Float) {
+        state.setCurrentEventOffsetLocation(x, y)
+    }
+
+    /**
+     * 给上一个事件设置偏移量
+     */
+    fun setPreviousEventOffsetLocation(x: Float, y: Float) {
+        state.setPreviousEventOffsetLocation(x, y)
+    }
+
+    /**
+     * 给所有事件设置偏移量
+     */
+    fun setAllEventOffsetLocation(x: Float, y: Float) {
+        state.setAllEventOffsetLocation(x, y)
+    }
+
+    /**
+     * 给开始事件设置变换
+     */
+    fun transformStartEvent(matrix: Matrix) {
+        state.transformStartEvent(matrix)
+    }
+
+    /**
+     * 给当前事件设置变换
+     */
+    fun transformCurrentEvent(matrix: Matrix) {
+        state.transformCurrentEvent(matrix)
+    }
+
+    /**
+     * 给上一个事件设置变换
+     */
+    fun transformPreviousEvent(matrix: Matrix) {
+        state.transformPreviousEvent(matrix)
+    }
+
+    /**
+     * 给所有事件设置变换
+     */
+    fun transformAllEvent(matrix: Matrix) {
+        state.transformAllEvent(matrix)
     }
 
     /**
