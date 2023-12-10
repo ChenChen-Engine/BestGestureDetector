@@ -32,7 +32,7 @@ class RotateAdsorptionGestureView : View {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
 
-    val gesture = BestGestureDetector(this).apply {
+    val gesture = BestGestureDetector(context).apply {
         setOnTouchListener(object : OnTouchGestureListener {
             override fun onTouchMove(detector: BestGestureDetector): Boolean {
                 return true
@@ -75,7 +75,7 @@ class RotateAdsorptionGestureView : View {
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        return gesture.onTouchEvent(event)
+        return gesture.onTouchEvent(this, event)
     }
 
     override fun onDraw(canvas: Canvas) {

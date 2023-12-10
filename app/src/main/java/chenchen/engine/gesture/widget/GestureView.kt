@@ -20,7 +20,7 @@ class GestureView : View {
     constructor(context: Context?) : super(context)
     constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
 
-    val gesture = BestGestureDetector(this).apply {
+    val gesture = BestGestureDetector(context).apply {
         setOnTouchListener(object : OnTouchGestureListener {
             override fun onTouchMove(detector: BestGestureDetector): Boolean {
                 offsetLeftAndRight(detector.moveX.toInt())
@@ -52,6 +52,6 @@ class GestureView : View {
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        return gesture.onTouchEvent(event)
+        return gesture.onTouchEvent(this, event)
     }
 }
