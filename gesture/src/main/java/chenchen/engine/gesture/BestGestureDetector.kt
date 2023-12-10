@@ -1,12 +1,12 @@
 package chenchen.engine.gesture
 
+import android.app.Activity
+import android.content.Context
 import android.graphics.PointF
-import android.os.Build
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import androidx.core.view.GestureDetectorCompat
-import chenchen.engine.gesture.compat.BestGestureStateApi28Impl
 import chenchen.engine.gesture.compat.MotionEventCompat
 import chenchen.engine.gesture.compat.MotionEventCompat.Companion.obtain
 import kotlin.math.abs
@@ -60,29 +60,26 @@ import kotlin.math.sqrt
  * @author: chenchen
  * @since: 2023/3/17 15:16
  */
-class BestGestureDetector(private val view: View) {
-
+class BestGestureDetector private constructor(
+    private val context: Context,
+    private val state: BestGestureState
+) {
     private val TAG = "BestGestureDetector"
-    private val state by lazy {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            BestGestureState()
-        } else {
-            BestGestureStateApi28Impl(view)
-        }
-    }
     private var scaleListener: OnScaleGestureListener? = null
     private var rotateListener: OnRotateGestureListener? = null
     private var moveListener: OnMoveGestureListener? = null
     private var touchListener: OnTouchGestureListener? = null
 
-    fun onTouchEvent(event: MotionEvent): Boolean {
+    constructor(context: Context) : this(context, BestGestureState())
+
+    fun onTouchEvent(view: View, event: MotionEvent): Boolean {
         state.resetConsumeValue()
-        state.rememberCurrentEvent(event)
+        state.rememberCurrentEvent(view, event)
         return when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 state.rememberStartEvent()
                 state.rememberPreviousEvent()
-                state.rememberPivot(calculateCenterX(), calculateCenterY())
+                state.rememberPivot(calculateCenterX(view), calculateCenterY(view))
                 touchListener?.provideRawPivot(state.pivot)
                 onDown(state.currentEvent!!).apply {
                     state.rememberPointerId()
@@ -363,7 +360,7 @@ class BestGestureDetector(private val view: View) {
         return isHandle
     }
 
-    private val onAndroidGesture = GestureDetectorCompat(view.context,
+    private val onAndroidGesture = GestureDetectorCompat(context,
         object : GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener {
 
             override fun onDown(e: MotionEvent) = true
@@ -783,7 +780,7 @@ class BestGestureDetector(private val view: View) {
     /**
      * 获取基于某个View在屏幕中x轴的绝对中心点
      */
-    fun calculateCenterX(view: View? = this.view): Float {
+    fun calculateCenterX(view: View?): Float {
         var absX = 0f
         if (view == null) {
             return absX
@@ -800,7 +797,7 @@ class BestGestureDetector(private val view: View) {
      * 获取基于某个View在屏幕中y轴的绝对中心点
      * [ ] 如果可以穿透状态栏该如何处理
      */
-    fun calculateCenterY(view: View? = this.view): Float {
+    fun calculateCenterY(view: View?): Float {
         var absY = 0f
         if (view == null) {
             return absY
@@ -827,7 +824,9 @@ class BestGestureDetector(private val view: View) {
      */
     fun getRawFocus(event: MotionEventCompat): PointF {
         val focus = getMultiFingerMidPoint(event)
-        focus.y -= view.statusBarHeight - view.actionBarHeight
+        if(context is Activity){
+            focus.y -= context.statusBarHeight - context.actionBarHeight
+        }
         return focus
     }
 
@@ -962,4 +961,20 @@ class BestGestureDetector(private val view: View) {
             state.isInDoubleTapScrollingGiveUpClick = value
         }
         get() = state.isInDoubleTapScrollingGiveUpClick
+
+    /**
+     * 复制一份新的，手势监听此时已经不存在了
+     */
+    fun copy(): BestGestureDetector {
+        return BestGestureDetector(
+                context, state.copy(
+                startEvent = startEvent,
+                currentEvent = currentEvent,
+                previousEvent = previousEvent,
+                pivot = PointF(state.pivot.x, state.pivot.y),
+                pointerIds = ArrayList(state.pointerIds),
+                currentTrackPointerIds = ArrayList(state.currentTrackPointerIds),
+                previousTrackPointerIds = ArrayList(state.previousTrackPointerIds),
+        ))
+    }
 }

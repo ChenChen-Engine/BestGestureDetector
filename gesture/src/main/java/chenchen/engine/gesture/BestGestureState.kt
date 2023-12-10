@@ -1,8 +1,9 @@
 package chenchen.engine.gesture
 
 import android.graphics.PointF
-import android.util.Log
+import android.os.Build
 import android.view.MotionEvent
+import android.view.View
 import chenchen.engine.gesture.compat.MotionEventCompat
 import chenchen.engine.gesture.compat.MotionEventCompat.Companion.compat
 import chenchen.engine.gesture.compat.MotionEventCompat.Companion.obtain
@@ -16,190 +17,194 @@ import kotlin.math.min
  * @author: chenchen
  * @since: 2023/4/14 11:03
  */
-internal open class BestGestureState {
-
-    private val TAG = "BestGestureState"
-
+internal data class BestGestureState(
     /**
      * 起始事件
      */
-    var startEvent: MotionEventCompat? = null
-        private set
+    var startEvent: MotionEventCompat? = null,
 
     /**
      * 上一次的事件
      */
-    var previousEvent: MotionEventCompat? = null
-        private set
+    var previousEvent: MotionEventCompat? = null,
 
     /**
      * 当前事件
      */
-    var currentEvent: MotionEventCompat? = null
-        private set
+    var currentEvent: MotionEventCompat? = null,
 
     /**
      * 单指手势时需要提供的中心点
      */
-    val pivot = PointF()
+    val pivot: PointF = PointF(),
 
     /**
      * 手指id
      */
-    val pointerIds = arrayListOf<Int>()
+    val pointerIds: ArrayList<Int> = arrayListOf(),
 
     /**
      * 已追踪的手指id
      */
-    private val currentTrackPointerIds = arrayListOf<Int>()
+    val currentTrackPointerIds: ArrayList<Int> = arrayListOf(),
 
     /**
      * 已追踪的手指id
      */
-    private val previousTrackPointerIds = arrayListOf<Int>()
+    val previousTrackPointerIds: ArrayList<Int> = arrayListOf(),
 
     /**
      * 双指是否正在缩放中
      */
-    var isInScaleProgress = false
+    var isInScaleProgress: Boolean = false,
 
     /**
      * 双指是否正在旋转中
      */
-    var isInRotateProgress = false
+    var isInRotateProgress: Boolean = false,
 
     /**
      * 双指是否正在移动中
      */
-    var isInMoveProgress = false
+    var isInMoveProgress: Boolean = false,
 
     /**
      * 是否单指手势
      */
-    var isInSingleFingerProgress = false
+    var isInSingleFingerProgress: Boolean = false,
 
     /**
      * 是否双指手势
      */
-    var isInMultiFingerProgress = false
+    var isInMultiFingerProgress: Boolean = false,
 
     /**
      * 是否处于单指长按当中，如果处于长按，需要自己处理[MotionEvent.ACTION_UP]
      */
-    var isInLongPressProgress = false
+    var isInLongPressProgress: Boolean = false,
 
     /**
      * 是否处于单指单次按压滑动中，如果处于单指滑动，需要自己处理[MotionEvent.ACTION_UP]
      */
-    var isInSingleTapScrollProgress = false
+    var isInSingleTapScrollProgress: Boolean = false,
 
     /**
      * 是否处于单指两次按压(双击)滑动中，如果处于单指滑动，需要自己处理[MotionEvent.ACTION_UP]
      */
-    var isInDoubleTapScrollingProgress = false
+    var isInDoubleTapScrollingProgress: Boolean = false,
 
     /**
      * 是否触发双击
      */
-    var isTriggerDoubleClick = false
+    var isTriggerDoubleClick: Boolean = false,
 
     /**
      * 是否使用过双指
      */
-    var isUsedMultiFinger = false
+    var isUsedMultiFinger: Boolean = false,
 
     /**
      * 是否完成一次手势，即执行过[recycleState]
      */
-    var isCompletedGesture = true
+    var isCompletedGesture: Boolean = true,
 
     /**
      * false 关闭双击，关闭双击后单击的响应会快一点，true 开启双击，开启双击后需要等待双击响应时间超时，单击响应就会慢一点
      */
-    var isEnableDoubleClick = true
+    var isEnableDoubleClick: Boolean = true,
 
     /**
      *
      * 是否处于单次按压后滑动，就放弃点击事件
      */
-    var isInSingleTapScrollingGiveUpClick = false
+    var isInSingleTapScrollingGiveUpClick: Boolean = false,
 
     /**
      * 是否处于两次按压（双击）后滑动，就放弃点击事件
      */
-    var isInDoubleTapScrollingGiveUpClick = false
+    var isInDoubleTapScrollingGiveUpClick: Boolean = false,
 
     /**
      * 追踪的手指数量，最低数量为2，
      * 单指设置无效，单指只追踪一根手指，多指至少追踪两根手指
      */
-    var trackPointerIdCount = 2
-        private set
+    var trackPointerIdCount: Int = 2,
 
     /**
      * 在一次事件中消费掉部分moveX的值
      */
-    var consumeMoveX = 0f
+    var consumeMoveX: Float = 0f,
 
     /**
      * 在一次事件中消费掉部分moveY的值
      */
-    var consumeMoveY = 0f
+    var consumeMoveY: Float = 0f,
 
     /**
      * 在一次事件中消费掉部分rotation的值
      */
-    var consumeRotation = 0f
+    var consumeRotation: Float = 0f,
 
     /**
      * 在一次事件中消费掉部分scaleFactor的值
      */
-    var consumeScaleFactor = 0f
+    var consumeScaleFactor: Float = 0f,
 
     /**
      * 指定累积移动x轴的值，每累积到该值，触发一次消费，只在本次手势结束前有效，下次手势开始前将重置
      */
-    var accumulateMoveX = 0f
+    var accumulateMoveX: Float = 0f,
 
     /**
      * 指定累积移动y轴的值，每累积到该值，触发一次消费，只在本次手势结束前有效，下次手势开始前将重置
      */
-    var accumulateMoveY = 0f
+    var accumulateMoveY: Float = 0f,
 
     /**
      * 指定累积旋转的值，每累积到该值，触发一次消费，只在本次手势结束前有效，下次手势开始前将重置
      */
-    var accumulateRotation = 0f
+    var accumulateRotation: Float = 0f,
 
     /**
      * 指定累积缩放的值，每累积到该值，触发一次消费，只在本次手势结束前有效，下次手势开始前将重置
      */
-    var accumulateScale = 0f
+    var accumulateScale: Float = 0f,
 
     /**
      * 记录移动x轴的值，每当值是[accumulateMoveX]倍数则消费一次，只在本次手势结束前有效，下次手势开始前将重置
      */
-    var rememberAccumulateMoveX = 0f
+    var rememberAccumulateMoveX: Float = 0f,
 
     /**
      * 记录移动y轴的值，每当值是[accumulateMoveY]倍数则消费一次，只在本次手势结束前有效，下次手势开始前将重置
      */
-    var rememberAccumulateMoveY = 0f
+    var rememberAccumulateMoveY: Float = 0f,
 
     /**
      * 记录旋转的值，每当值是[accumulateRotation]倍数则消费一次，只在本次手势结束前有效，下次手势开始前将重置
      */
-    var rememberAccumulateRotation = 0f
+    var rememberAccumulateRotation: Float = 0f,
 
     /**
      * 记录缩放的值，每当值是[accumulateScale]倍数则消费一次，只在本次手势结束前有效，下次手势开始前将重置
      */
-    var rememberAccumulateScale = 0f
+    var rememberAccumulateScale: Float = 0f,
+) {
+
+    private val TAG = "BestGestureState"
 
     /**
      * 记录当前Event
+     * 兼容Android10以下[MotionEvent.getRawX]会因为[android.view.ViewGroup]分发的过程中被转换过的问题
+     * [MotionEvent.getRawX]应该是屏幕的绝对坐标，不受任何变化影象。
+     * 导致的现象则是会出现坐标抖动
      */
-    open fun rememberCurrentEvent(event: MotionEvent) {
+    open fun rememberCurrentEvent(view: View, event: MotionEvent) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            if (!view.matrix.isIdentity) {
+                event.transform(view.matrix)
+            }
+        }
         if (currentEvent != null) {
             currentEvent?.recycle()
         }
