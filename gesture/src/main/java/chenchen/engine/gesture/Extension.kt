@@ -1,7 +1,7 @@
 package chenchen.engine.gesture
 
 import android.app.Activity
-import android.graphics.Matrix
+import android.content.Context
 import android.graphics.Point
 import android.graphics.PointF
 import android.graphics.Rect
@@ -23,72 +23,9 @@ import kotlin.math.roundToInt
  */
 
 /**
- * 临时坐标1，复用
- */
-private val tempPoint1 by lazy { Point(0, 0) }
-
-/**
- * 临时坐标2，复用
- */
-private val tempPoint2 by lazy { Point(0, 0) }
-
-/**
- * 临时坐标1，复用
- */
-private val tempPointF1 by lazy { PointF(0f, 0f) }
-
-/**
- * 临时坐标2，复用
- */
-private val tempPointF2 by lazy { PointF(0f, 0f) }
-
-/**
- * 临时的矩形1，复用
- */
-private val tempRectF1 by lazy { RectF() }
-
-/**
- * 临时的矩形2，复用
- */
-private val tempRectF2 by lazy { RectF() }
-
-/**
- * 临时的矩形1，复用
- */
-private val tempRect1 by lazy { Rect() }
-
-/**
- * 临时的矩形2，复用
- */
-private val tempRect2 by lazy { Rect() }
-
-private fun Point.clear() = this.apply { set(0, 0) }
-
-private fun PointF.clear() = this.apply { set(0f, 0f) }
-
-private fun RectF.clear() = this.apply { setEmpty() }
-
-private fun Rect.clear() = this.apply { setEmpty() }
-
-private fun Matrix.clear() = this.apply { reset() }
-
-
-/**
- * 屏幕宽
- */
-val View.screenWidth: Int
-    get() = context.resources.displayMetrics.widthPixels
-
-/**
- * 屏幕高
- */
-val View.screenHeight: Int
-    get() = context.resources.displayMetrics.heightPixels
-
-/**
  * 获取状态栏高度
  */
-val View.statusBarHeight: Int
+internal val View.statusBarHeight: Int
     get() {
         val windowInsets = ViewCompat.getRootWindowInsets(this)
         if (windowInsets != null) {
@@ -101,13 +38,30 @@ val View.statusBarHeight: Int
 /**
  * 获取ActionBar高度
  */
-val View.actionBarHeight: Int
+internal val View.actionBarHeight: Int
     get() {
-        return (context as? AppCompatActivity)?.supportActionBar?.height
-            ?: (context as? AppCompatActivity)?.actionBar?.height
-            ?: (context as? Activity)?.actionBar?.height ?: 0
+        return context.actionBarHeight
     }
 
+internal val Activity.statusBarHeight:Int
+    get() {
+        val windowInsets = ViewCompat.getRootWindowInsets(window.decorView)
+        if (windowInsets != null) {
+            val insets: Insets = windowInsets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.statusBars())
+            return insets.top
+        }
+        return 0
+    }
+
+/**
+ * 获取ActionBar高度
+ */
+internal val Context.actionBarHeight: Int
+    get() {
+        return (this as? AppCompatActivity)?.supportActionBar?.height
+            ?: (this as? AppCompatActivity)?.actionBar?.height
+            ?: (this as? Activity)?.actionBar?.height ?: 0
+    }
 
 /**
  * 如果相等则为null
@@ -134,7 +88,7 @@ internal fun Float.nullIf(equals: Float?): Float? {
  *
  * PS: 这里只处理了`StatusBar`和`ActionBar`的高度，没有处理虚拟键盘和手势的高度，可能会有影响
  */
-internal fun View.getGlobalRect(
+fun View.getGlobalRect(
     rect: Rect, offset: Point? = null,
     isContainsStatusBar: Boolean = false,
     isContainsActionBar: Boolean = false,
@@ -146,19 +100,19 @@ internal fun View.getGlobalRect(
         offset?.set(-this.scrollX, -this.scrollY)
         var parent: ViewGroup? = parent as? ViewGroup ?: return true
         var child: View = this
+        val tempRectF = RectF()
         while (parent != null) {
 
-            val temp = tempRectF1.clear()
-            temp.set(rect)
-
+            tempRectF.setEmpty()
+            tempRectF.set(rect)
             if (child.matrix?.isIdentity == false) {
-                child.matrix.mapRect(temp)
+                child.matrix.mapRect(tempRectF)
             }
 
             val dx = child.left - parent.scrollX
             val dy = child.top - parent.scrollY
 
-            temp.offset(dx.toFloat(), dy.toFloat())
+            tempRectF.offset(dx.toFloat(), dy.toFloat())
 
             if (offset != null) {
                 if (child.matrix?.isIdentity == false) {
@@ -172,10 +126,10 @@ internal fun View.getGlobalRect(
                 offset.x += dx
                 offset.y += dy
             }
-            rect.set(floor(temp.left.toDouble()).toInt(),
-                floor(temp.top.toDouble()).toInt(),
-                ceil(temp.right.toDouble()).toInt(),
-                ceil(temp.bottom.toDouble()).toInt())
+            rect.set(floor(tempRectF.left.toDouble()).toInt(),
+                floor(tempRectF.top.toDouble()).toInt(),
+                ceil(tempRectF.right.toDouble()).toInt(),
+                ceil(tempRectF.bottom.toDouble()).toInt())
 
             child = parent
             parent = parent.parent as? ViewGroup
@@ -277,6 +231,43 @@ fun View.reverseTransformTouchLocation(x: Float, y: Float): PointF {
     val offsetX = points[0] + left - parent.scrollX
     val offsetY = points[1] + top - parent.scrollY
     return PointF(offsetX, offsetY)
+}
+
+/**
+ * 将父View事件转成子View事件
+ * @param event 父View的事件
+ */
+fun View.transformTouchEvent(event: MotionEvent): MotionEvent {
+    val parent = parent as? ViewGroup ?: return event
+    val transformedEvent = MotionEvent.obtain(event)
+    val offsetX = parent.scrollX - this.left
+    val offsetY = parent.scrollY - this.top
+    transformedEvent.offsetLocation(offsetX.toFloat(), offsetY.toFloat())
+    //如果矩阵被变换过，则变换触摸位置
+    if (!this.matrix.isIdentity) {
+        val invertMatrix = this.matrix
+        invertMatrix.reset()
+        this.matrix.invert(invertMatrix)
+        transformedEvent.transform(invertMatrix)
+    }
+    return transformedEvent
+}
+
+/**
+ * 将子View自己的事件逆转成父View的事件，这里注意，转换的结果和原始事件有精度误差，等于比较是没用的
+ * @param event 子View自己的事件
+ */
+fun View.reverseTransformTouchEvent(event: MotionEvent): MotionEvent {
+    val parent = parent as? ViewGroup ?: return event
+    val transformedEvent = MotionEvent.obtain(event)
+    if (!matrix.isIdentity) {
+        transformedEvent.transform(matrix)
+    }
+    transformedEvent.offsetLocation(
+            left - parent.scrollX.toFloat(),
+            top - parent.scrollY.toFloat()
+    )
+    return transformedEvent
 }
 
 /**
