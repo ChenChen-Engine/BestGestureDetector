@@ -667,14 +667,14 @@ internal data class BestGestureState(
      * 设置当前事件的绝对位置
      */
     fun setCurrentEventLocation(x: Float, y: Float) {
-        startEvent?.setLocation(x, y)
+        currentEvent?.setLocation(x, y)
     }
 
     /**
      * 设置上一个事件的绝对位置
      */
     fun setPreviousEventLocation(x: Float, y: Float) {
-        startEvent?.setLocation(x, y)
+        previousEvent?.setLocation(x, y)
     }
 
     /**
