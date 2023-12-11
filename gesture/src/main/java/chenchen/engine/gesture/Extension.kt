@@ -152,49 +152,73 @@ fun View.getGlobalRect(
  * @param target 需要映射的[View]
  * @param x 相对[source]的x坐标
  * @param y 相对[source]的y坐标
- * @param isUp 是否向上查找，如果为false，会向下查找
  * @return 如果映射失败，则返回null
  */
-fun touchLocalLocationMapToOtherViewLocalLocation(source: View, target: View, x: Float, y: Float, isUp: Boolean = true): PointF? {
-    if (target.parent !is ViewGroup) return null
-    val parent = source.parent as? ViewGroup ?: return null
+fun touchLocationMapToOtherLocation(source: View, target: View, x: Float, y: Float): PointF? {
     //查找的是同一个，直接返回
-    if (source == target) return PointF(x, y)
-    //如果查找的是同级
-    if (parent.indexOfChild(target) != -1) {
-        val parentLocation = source.reverseTransformTouchLocation(x, y)
-        return target.transformTouchLocation(parentLocation.x, parentLocation.y)
+    if (source == target) {
+        return PointF(x, y)
     }
-    if (!isUp) {
-        //向下查询
-        if (source is ViewGroup) {
-            //如果查找的是直接子级，正向转换一次即可
-            if (source.indexOfChild(target) != -1) {
-                return target.transformTouchLocation(x, y)
-            } else {
-                var result: PointF? = null
-                //直接子级找不到，就遍历并递归查找
-                for (i in source.childCount downTo 0) {
-                    val child = source.getChildAt(i)
-                    val childLocation = child.transformTouchLocation(x, y)
-                    result = touchLocalLocationMapToOtherViewLocalLocation(child,
-                        target, childLocation.x, childLocation.y, isUp)
-                    if (result != null) {
-                        return result
-                    }
-                }
-                return result
-            }
-        } else {
-            return null
+    //如果target是source的直接子View，立即返回
+    if (source is ViewGroup) {
+        if (source.indexOfChild(target) != -1) {
+            return target.transformTouchLocation(x, y)
         }
-    } else {
-        //向上查询
-        val parentLocation = source.reverseTransformTouchLocation(x, y)
-        return touchLocalLocationMapToOtherViewLocalLocation(parent, target, parentLocation.x, parentLocation.y, isUp)
     }
-}
+    //如果source是target的直接子View，立即返回
+    if (target is ViewGroup) {
+        if (target.indexOfChild(target) != -1) {
+            return source.transformTouchLocation(x, y)
+        }
+    }
+    //查找最小公倍父类
+    val sourceParents = arrayListOf<ViewGroup>()
+    val targetParents = arrayListOf<ViewGroup>()
+    var sourceParent = (source as? ViewGroup) ?: (source.parent as? ViewGroup)
+    var targetParent = (target as? ViewGroup) ?: (target.parent as? ViewGroup)
+    outer@ while (sourceParent != null) {
+        if (sourceParent != source) {
+            sourceParents.add(sourceParent)
+        }
+        while (targetParent != null) {
+            if (targetParent != target) {
+                targetParents.add(targetParent)
+            }
+            if (sourceParent === targetParent) {
+                // 找到共同父容器
+                break@outer
+            }
+            targetParent = (targetParent.parent as? ViewGroup)
+        }
+        targetParents.clear()
+        targetParent = (target as? ViewGroup) ?: (target.parent as? ViewGroup)
+        sourceParent = sourceParent.parent as? ViewGroup
+    }
+    if (sourceParents.isEmpty() || targetParents.isEmpty()) {
+        return null
+    }
 
+    //去掉公共父容器。特殊情况source往上转一层就可能是公共父容器了
+    //      /                 /
+    //    /  \          source  target
+    //  /     \
+    //source   \
+    //         target
+    sourceParents.removeLastOrNull()
+    targetParents.removeLastOrNull()
+
+    //source往上转换
+    var sourceParentLocation = source.reverseTransformTouchLocation(x, y)
+    for (parent in sourceParents) {
+        sourceParentLocation = parent.reverseTransformTouchLocation(sourceParentLocation.x, sourceParentLocation.y)
+    }
+    //转到公共父容器，就往下转换
+    for (parent in targetParents) {
+        sourceParentLocation = parent.transformTouchLocation(sourceParentLocation.x, sourceParentLocation.y)
+    }
+    //最后转换给target
+    return target.transformTouchLocation(sourceParentLocation.x, sourceParentLocation.y)
+}
 /**
  * 将父[View]的相对位置转换成子[View]的相对位置
  * @param x 父[View]的x坐标
@@ -290,4 +314,39 @@ fun View.doParentDispatchTouchEvent(event: MotionEvent): Boolean {
     val result = dispatchTouchEvent(transformedEvent)
     transformedEvent.recycle()
     return result
+}
+
+/**
+ * 将手势转换为子View的坐标系
+ * @param view 需要转换的子View
+ */
+fun BestGestureDetector.transform(view: View): BestGestureDetector {
+    val parent = view.parent as? ViewGroup ?: return this
+    val offsetX = parent.scrollX - view.left
+    val offsetY = parent.scrollY - view.top
+    this.setAllEventOffsetLocation(offsetX.toFloat(), offsetY.toFloat())
+    //如果矩阵被变换过，则变换触摸位置
+    if (!view.matrix.isIdentity) {
+        val invertMatrix = view.matrix
+        invertMatrix.reset()
+        view.matrix.invert(invertMatrix)
+        this.transformAllEvent(invertMatrix)
+    }
+    return this
+}
+
+/**
+ * 将手势转换为父View的坐标系
+ * @param view 子View自己
+ */
+fun BestGestureDetector.reverseTransform(view: View): BestGestureDetector {
+    val parent = view.parent as? ViewGroup ?: return this
+    if (!view.matrix.isIdentity) {
+        this.transformAllEvent(view.matrix)
+    }
+    this.setAllEventOffsetLocation(
+        view.left - parent.scrollX.toFloat(),
+        view.top - parent.scrollY.toFloat()
+    )
+    return this
 }
