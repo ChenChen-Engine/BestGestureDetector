@@ -401,34 +401,6 @@ internal data class BestGestureState(
     }
 
     /**
-     * 是否是累积消费移动X模式
-     */
-    fun isAccumulateMoveXMode(): Boolean {
-        return accumulateMoveX > 0
-    }
-
-    /**
-     * 是否是累积消费移动Y模式
-     */
-    fun isAccumulateMoveYMode(): Boolean {
-        return accumulateMoveY > 0
-    }
-
-    /**
-     * 是否是累积消费旋转模式
-     */
-    fun isAccumulateRotationMode(): Boolean {
-        return accumulateRotation > 0
-    }
-
-    /**
-     * 是否是累积消费缩放模式
-     */
-    fun isAccumulateScaleMode(): Boolean {
-        return accumulateScale > 0
-    }
-
-    /**
      * 能否消费累积的x轴移动值
      */
     fun canConsumeAccumulateMoveX(): Boolean {

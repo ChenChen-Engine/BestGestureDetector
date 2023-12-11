@@ -279,7 +279,7 @@ class BestGestureDetector private constructor(
      */
     private fun onHandleMultiPointerMove(): Boolean {
         state.rememberAccumulateMove(calculateMoveX(), calculateMoveY())
-        if (state.isAccumulateMoveXMode() || state.isAccumulateMoveYMode()) {
+        if (state.canConsumeAccumulateMoveX() || state.canConsumeAccumulateMoveY()) {
             while (state.canConsumeAccumulateMoveX() || state.canConsumeAccumulateMoveY()) {
                 state.isInMoveProgress = moveListener!!.onMove(this)
                 state.consumeAccumulateMoveX()
@@ -300,7 +300,7 @@ class BestGestureDetector private constructor(
      */
     private fun onHandleMultiPointerRotation(): Boolean {
         state.rememberAccumulateRotation(calculateRotation())
-        if (state.isAccumulateRotationMode()) {
+        if (state.canConsumeAccumulateRotation()) {
             while (state.canConsumeAccumulateRotation()) {
                 state.isInRotateProgress = rotateListener!!.onRotate(this)
                 state.consumeAccumulateRotation()
@@ -320,7 +320,7 @@ class BestGestureDetector private constructor(
      */
     private fun onHandleMultiPointerScale(): Boolean {
         state.rememberAccumulateScale(calculateScaleFactor())
-        if (state.isAccumulateScaleMode()) {
+        if (state.canConsumeAccumulateScale()) {
             while (state.canConsumeAccumulateScale()) {
                 state.isInScaleProgress = scaleListener!!.onScale(this)
                 state.consumeAccumulateScale()
@@ -345,8 +345,8 @@ class BestGestureDetector private constructor(
         state.rememberAccumulateRotation(calculateRotation())
         state.rememberAccumulateScale(calculateScaleFactor())
         //判断能否消费累积值
-        if (state.isAccumulateMoveXMode() || state.isAccumulateMoveYMode()
-            || state.isAccumulateRotationMode() || state.isAccumulateScaleMode()) {
+        if (state.canConsumeAccumulateMoveX() || state.canConsumeAccumulateMoveY()
+            || state.canConsumeAccumulateRotation() || state.canConsumeAccumulateScale()) {
             //循环消费累积值
             while (state.canConsumeAccumulateMoveX() || state.canConsumeAccumulateMoveY()
                 || state.canConsumeAccumulateRotation() || state.canConsumeAccumulateScale()) {
