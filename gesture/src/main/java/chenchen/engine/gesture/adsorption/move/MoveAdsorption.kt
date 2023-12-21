@@ -2,12 +2,15 @@ package chenchen.engine.gesture.adsorption.move
 
 import android.animation.ValueAnimator
 import android.graphics.Rect
+import android.graphics.RectF
 import android.view.View
 import chenchen.engine.gesture.ConstrainedAlignment
 import chenchen.engine.gesture.ConstrainedAlignment.*
 import chenchen.engine.gesture.ConstraintAlignment
 import chenchen.engine.gesture.MoveMovementTrack
-import chenchen.engine.gesture.getGlobalRect
+import chenchen.engine.gesture.getViewRawRectF
+import chenchen.engine.gesture.rectCoordinateMapToOtherCoordinate
+import chenchen.engine.gesture.toViewRect
 import kotlin.math.abs
 
 /**
@@ -24,12 +27,21 @@ data class MoveAdsorption(
      * 磁铁列表
      */
     val magnets: List<MoveMagnet>,
+    /**
+     * 吸附动画执行时长
+     */
+    val duration: Long = 30L,
 ) {
+
+    /**
+     * 是否在吸附动画中
+     */
+    var isInAdsorptionProgress = false
 
     /**
      * 吸附动画
      */
-    internal var adsorptionValueAnim: ValueAnimator? = null
+    var adsorptionValueAnim: ValueAnimator? = null
 
     /**
      * 磁性物体的坐标，复用
@@ -37,9 +49,24 @@ data class MoveAdsorption(
     internal val magneticRect = Rect()
 
     /**
+     * 磁性物体的坐标，复用
+     */
+    internal val magneticRectF = RectF()
+
+    /**
      * 磁铁的坐标，复用
      */
     internal val magnetRect = Rect()
+
+    /**
+     * 磁铁的坐标，复用
+     */
+    internal val magnetRectF = RectF()
+
+    /**
+     * 矩阵转换临时使用的，复用
+     */
+    internal val matrixTempRectF = RectF()
 
     /**
      * 吸住左边的磁铁
@@ -238,30 +265,37 @@ data class MoveAdsorption(
         if (!magnetic.target.isAttachedToWindow) {
             return 0
         }
-        magneticRect.setEmpty()
-        magnetRect.setEmpty()
         val measureResult = getMaxAdsorptionMeasureResult(
             leftAnalyzes, horizontalCenterAnalyzes, rightAnalyzes
         ) ?: return 0
-        magnetic.target.getGlobalRect(magneticRect)
-        measureResult.magnet.target.getGlobalRect(magnetRect)
-        val adsRect = magneticRect
-        val magnetRect = magnetRect
-        return when (measureResult.alignment) {
-            LeftToLeft -> adsRect.left - magnetRect.left
-            LeftToHorizontalCenter -> adsRect.left - magnetRect.centerX()
-            LeftToRight -> adsRect.left - magnetRect.right
-            HorizontalCenterToLeft -> adsRect.centerX() - magnetRect.left
-            HorizontalCenterToHorizontalCenter -> adsRect.centerX() - magnetRect.centerX()
-            HorizontalCenterToRight -> adsRect.centerX() - magnetRect.right
-            RightToLeft -> adsRect.right - magnetRect.left
-            RightToHorizontalCenter -> adsRect.right - magnetRect.centerX()
-            RightToRight -> adsRect.right - magnetRect.right
+        val magnet = measureResult.magnet
+        val magneticRectF = magnetic.target.getViewRawRectF(magneticRectF)
+        val magneticRect = rectCoordinateMapToOtherCoordinate(
+            magnet.target, magnetic.target, magneticRectF).toViewRect(magneticRect)
+        val magnetRect = magnet.target.getViewRawRectF(magnetRectF).toViewRect(magnetRect)
+        val distance = when (measureResult.alignment) {
+            LeftToLeft -> magneticRect.left - magnetRect.left
+            LeftToHorizontalCenter -> magneticRect.left - magnetRect.centerX()
+            LeftToRight -> magneticRect.left - magnetRect.right
+            HorizontalCenterToLeft -> magneticRect.centerX() - magnetRect.left
+            HorizontalCenterToHorizontalCenter -> magneticRect.centerX() - magnetRect.centerX()
+            HorizontalCenterToRight -> magneticRect.centerX() - magnetRect.right
+            RightToLeft -> magneticRect.right - magnetRect.left
+            RightToHorizontalCenter -> magneticRect.right - magnetRect.centerX()
+            RightToRight -> magneticRect.right - magnetRect.right
             else -> 0
-        }.apply {
-            magneticRect.setEmpty()
-            this@MoveAdsorption.magnetRect.setEmpty()
         }
+        matrixTempRectF.set(0f, 0f, distance.toFloat(), 0f)
+        rectCoordinateMapToOtherCoordinate(magnetic.target, magnet.target, matrixTempRectF)
+        //矩阵变换后无法得知原始的值是正的还是负的，需要多一步判断原始值
+        val value = if (distance > 0) {
+            matrixTempRectF.width()
+        } else {
+            -matrixTempRectF.width()
+        }
+        magneticRect.setEmpty()
+        magnetRect.setEmpty()
+        return value.toInt()
     }
 
     /**
@@ -271,30 +305,37 @@ data class MoveAdsorption(
         if (!magnetic.target.isAttachedToWindow) {
             return 0
         }
-        magneticRect.setEmpty()
-        magnetRect.setEmpty()
         val measureResult = getMaxAdsorptionMeasureResult(
             topAnalyzes, verticalCenterAnalyzes, bottomAnalyzes
         ) ?: return 0
-        magnetic.target.getGlobalRect(magneticRect)
-        measureResult.magnet.target.getGlobalRect(magnetRect)
-        val adsRect = magneticRect
-        val magnetRect = magnetRect
-        return when (measureResult.alignment) {
-            TopToTop -> adsRect.top - magnetRect.top
-            TopToVerticalCenter -> adsRect.top - magnetRect.centerY()
-            TopToBottom -> adsRect.top - magnetRect.bottom
-            VerticalCenterToTop -> adsRect.centerY() - magnetRect.top
-            VerticalCenterToVerticalCenter -> adsRect.centerY() - magnetRect.centerY()
-            VerticalCenterToBottom -> adsRect.centerY() - magnetRect.bottom
-            BottomToTop -> adsRect.bottom - magnetRect.top
-            BottomToVerticalCenter -> adsRect.bottom - magnetRect.centerY()
-            BottomToBottom -> adsRect.bottom - magnetRect.bottom
+        val magnet = measureResult.magnet
+        val magneticRectF = magnetic.target.getViewRawRectF(magneticRectF)
+        val magneticRect = rectCoordinateMapToOtherCoordinate(
+            magnet.target, magnetic.target, magneticRectF).toViewRect(magneticRect)
+        val magnetRect = magnet.target.getViewRawRectF(magnetRectF).toViewRect(magnetRect)
+        val distance = when (measureResult.alignment) {
+            TopToTop -> magneticRect.top - magnetRect.top
+            TopToVerticalCenter -> magneticRect.top - magnetRect.centerY()
+            TopToBottom -> magneticRect.top - magnetRect.bottom
+            VerticalCenterToTop -> magneticRect.centerY() - magnetRect.top
+            VerticalCenterToVerticalCenter -> magneticRect.centerY() - magnetRect.centerY()
+            VerticalCenterToBottom -> magneticRect.centerY() - magnetRect.bottom
+            BottomToTop -> magneticRect.bottom - magnetRect.top
+            BottomToVerticalCenter -> magneticRect.bottom - magnetRect.centerY()
+            BottomToBottom -> magneticRect.bottom - magnetRect.bottom
             else -> 0
-        }.apply {
-            magneticRect.setEmpty()
-            this@MoveAdsorption.magnetRect.setEmpty()
         }
+        matrixTempRectF.set(0f, 0f, distance.toFloat(), 0f)
+        rectCoordinateMapToOtherCoordinate(magnetic.target, magnet.target, matrixTempRectF)
+        //矩阵变换后无法得知原始的值是正的还是负的，需要多一步判断原始值
+        val value = if (distance > 0) {
+            matrixTempRectF.width()
+        } else {
+            -matrixTempRectF.width()
+        }
+        magneticRect.setEmpty()
+        magnetRect.setEmpty()
+        return value.toInt()
     }
 
     /**
@@ -487,7 +528,6 @@ class MoveMagnet(
      */
     val hImmunityThreshold: Int = 20,
 )
-
 
 /**
  * 测量结果

@@ -13,9 +13,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
-import kotlin.math.roundToInt
 
 /**
  * @author: chenchen
@@ -43,7 +43,7 @@ internal val View.actionBarHeight: Int
         return context.actionBarHeight
     }
 
-internal val Activity.statusBarHeight:Int
+internal val Activity.statusBarHeight: Int
     get() {
         val windowInsets = ViewCompat.getRootWindowInsets(window.decorView)
         if (windowInsets != null) {
@@ -75,74 +75,6 @@ internal fun Int.nullIf(equals: Int?): Int? {
  */
 internal fun Float.nullIf(equals: Float?): Float? {
     return if (this == equals) null else this
-}
-
-/**
- * 获取以[androidx.appcompat.R.id.content]为全局坐标的坐标，即使不可见，
- * 可通过参数[isContainsStatusBar]和[isContainsActionBar]来控制是否包含`StatusBar`和`ActionBar`的高度
- *
- * @param rect 需要获取的坐标
- * @param offset 用法参考[View.getGlobalVisibleRect]的参数
- * @param isContainsStatusBar 获取的坐标是否包含`StatusBar`高度，默认不包含
- * @param isContainsActionBar 获取的坐标是否包含`ActionBar`高度，默认不包含
- *
- * PS: 这里只处理了`StatusBar`和`ActionBar`的高度，没有处理虚拟键盘和手势的高度，可能会有影响
- */
-fun View.getGlobalRect(
-    rect: Rect, offset: Point? = null,
-    isContainsStatusBar: Boolean = false,
-    isContainsActionBar: Boolean = false,
-): Boolean {
-    val width: Int = this.right - this.left
-    val height: Int = this.bottom - this.top
-    if (width > 0 && height > 0) {
-        rect.set(0, 0, width, height)
-        offset?.set(-this.scrollX, -this.scrollY)
-        var parent: ViewGroup? = parent as? ViewGroup ?: return true
-        var child: View = this
-        val tempRectF = RectF()
-        while (parent != null) {
-
-            tempRectF.setEmpty()
-            tempRectF.set(rect)
-            if (child.matrix?.isIdentity == false) {
-                child.matrix.mapRect(tempRectF)
-            }
-
-            val dx = child.left - parent.scrollX
-            val dy = child.top - parent.scrollY
-
-            tempRectF.offset(dx.toFloat(), dy.toFloat())
-
-            if (offset != null) {
-                if (child.matrix?.isIdentity == false) {
-                    val position = FloatArray(2)
-                    position[0] = offset.x.toFloat()
-                    position[1] = offset.y.toFloat()
-                    child.matrix.mapPoints(position)
-                    offset.x = position[0].roundToInt()
-                    offset.y = position[1].roundToInt()
-                }
-                offset.x += dx
-                offset.y += dy
-            }
-            rect.set(floor(tempRectF.left.toDouble()).toInt(),
-                floor(tempRectF.top.toDouble()).toInt(),
-                ceil(tempRectF.right.toDouble()).toInt(),
-                ceil(tempRectF.bottom.toDouble()).toInt())
-
-            child = parent
-            parent = parent.parent as? ViewGroup
-        }
-        if (!isContainsStatusBar) {
-            rect.offset(0, -statusBarHeight)
-        }
-        if (!isContainsActionBar) {
-            rect.offset(0, -actionBarHeight)
-        }
-        return true
-    }
-    return false
 }
 
 /**
@@ -219,6 +151,7 @@ fun touchLocationMapToOtherLocation(source: View, target: View, x: Float, y: Flo
     //最后转换给target
     return target.transformTouchLocation(sourceParentLocation.x, sourceParentLocation.y)
 }
+
 /**
  * 将父[View]的相对位置转换成子[View]的相对位置
  * @param x 父[View]的x坐标
@@ -288,10 +221,134 @@ fun View.reverseTransformTouchEvent(event: MotionEvent): MotionEvent {
         transformedEvent.transform(matrix)
     }
     transformedEvent.offsetLocation(
-            left - parent.scrollX.toFloat(),
-            top - parent.scrollY.toFloat()
+        left - parent.scrollX.toFloat(),
+        top - parent.scrollY.toFloat()
     )
     return transformedEvent
+}
+
+/**
+ * 将rect从[source]的坐标系映射到[target]坐标系
+ * @param source 需要转换的[View]，确保left,top,right,bottom是正确的
+ * @param target 将要转换到这个[View]所在的坐标系，确保left,top,right,bottom是正确的
+ * @param rectF 需要映射的矩形，如果是随意提供的矩形，不需要在意特殊情况，如果是从[View]获取的，请参考以下代码：
+ *```
+ *  fun View.getRectF(): RectF {
+ *     val rectF = RectF(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat())
+ *     if (!matrix.isIdentity) {
+ *          val matrix = matrix
+ *          matrix.reset()
+ *          matrix.postScale(abs(scaleX), abs(scaleY), left + pivotX, top + pivotY)
+ *          matrix.mapRect(rectF)
+ *     }
+ *     return rectF
+ *  }
+ *```
+ */
+fun rectCoordinateMapToOtherCoordinate(source: View, target: View, rectF: RectF): RectF {
+    if (source == target) {
+        return rectF
+    }
+    //查找最小公倍父类
+    val sourceParents = arrayListOf<ViewGroup>()
+    val targetParents = arrayListOf<ViewGroup>()
+    var sourceParent = (source as? ViewGroup) ?: source.parent as? ViewGroup
+    var targetParent = (target as? ViewGroup) ?: target.parent as? ViewGroup
+    outer@ while (sourceParent != null) {
+        if (sourceParent != source) {
+            sourceParents.add(sourceParent)
+        }
+        while (targetParent != null) {
+            if (targetParent != target) {
+                targetParents.add(targetParent)
+            }
+            if (sourceParent === targetParent) {
+                // 找到共同父容器
+                break@outer
+            }
+            targetParent = (targetParent.parent as? ViewGroup)
+        }
+        targetParents.clear()
+        targetParent = (target as? ViewGroup) ?: (target.parent as? ViewGroup)
+        sourceParent = sourceParent.parent as? ViewGroup
+    }
+
+    //去掉公共父容器。特殊情况source往上转一层就可能是公共父容器了
+    //      /                 /
+    //    /  \          source  target
+    //  /     \
+    //source   \
+    //         target
+    sourceParents.removeLastOrNull()
+    targetParents.removeLastOrNull()
+
+    source.reverseTransformRectF(rectF)
+    for (parent in sourceParents) {
+        parent.reverseTransformRectF(rectF)
+    }
+    for (parent in targetParents) {
+        parent.transformRectF(rectF)
+    }
+    target.transformRectF(rectF)
+    return rectF
+}
+
+/**
+ * 将[RectF]从[View]坐标体系逆转成父容器[ViewGroup]的坐标系
+ */
+fun View.reverseTransformRectF(rectF: RectF): RectF {
+    val parent = parent as? ViewGroup ?: return rectF
+    val matrix = matrix
+    matrix.reset()
+    matrix.preTranslate(-parent.scrollX.toFloat(), -parent.scrollY.toFloat())
+    matrix.preTranslate(-parent.left.toFloat(), -parent.top.toFloat())
+    matrix.preScale(1 / abs(parent.scaleX), 1 / abs(parent.scaleY), parent.left + parent.pivotX, parent.top + parent.pivotY)
+    matrix.preRotate(parent.rotation, parent.left + parent.pivotX, parent.top + parent.pivotY)
+    matrix.mapRect(rectF)
+    return rectF
+}
+
+/**
+ * 将[RectF]从[ViewGroup]坐标体系逆转成子[View]的坐标系
+ */
+fun View.transformRectF(rectF: RectF): RectF {
+    val parent = parent as? ViewGroup ?: return rectF
+    val matrix = matrix
+    matrix.reset()
+    matrix.preRotate(parent.rotation, parent.left + parent.pivotX, parent.top + parent.pivotY)
+    matrix.preScale(abs(parent.scaleX), abs(parent.scaleY), parent.left + parent.pivotX, parent.top + parent.pivotY)
+    matrix.preTranslate(parent.left.toFloat(), parent.top.toFloat())
+    matrix.preTranslate(parent.scrollX.toFloat(), parent.scrollY.toFloat())
+    matrix.mapRect(rectF)
+    return rectF
+}
+
+/**
+ * 获取[View]原始矩形，比如原本是300*300，缩放了0.5，那获取到的就是150*150
+ * @param rectF 主动传可实现一定的性能优化，建议主动传入
+ */
+fun View?.getViewRawRectF(rectF: RectF = RectF()): RectF {
+    this ?: return rectF
+    rectF.set(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat())
+    if (!matrix.isIdentity) {
+        val cacheMatrix = matrix
+        cacheMatrix.reset()
+        cacheMatrix.postScale(abs(scaleX), abs(scaleY), left + pivotX, top + pivotY)
+        cacheMatrix.postRotate(rotation, left + pivotX, top + pivotY)
+        cacheMatrix.mapRect(rectF)
+    }
+    return rectF
+}
+
+
+/**
+ * 将RectF转换成[View]专用的Rect
+ * @param rect 主动传可实现一定的性能优化，建议主动传入
+ */
+fun RectF.toViewRect(rect: Rect = Rect()): Rect {
+    rect.set(floor(left.toDouble()).toInt(), floor(top.toDouble()).toInt(),
+        ceil(right.toDouble()).toInt(), ceil(bottom.toDouble()).toInt())
+    return rect
 }
 
 /**

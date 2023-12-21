@@ -11,8 +11,10 @@ import chenchen.engine.gesture.ConstraintAlignment.*
 import chenchen.engine.gesture.ConstrainedAlignment.*
 import chenchen.engine.gesture.MoveGestureDetector
 import chenchen.engine.gesture.MoveMovementTrack
-import chenchen.engine.gesture.getGlobalRect
+import chenchen.engine.gesture.getViewRawRectF
 import chenchen.engine.gesture.nullIf
+import chenchen.engine.gesture.rectCoordinateMapToOtherCoordinate
+import chenchen.engine.gesture.toViewRect
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -30,11 +32,6 @@ class MoveAdsorptionGestureDetector(
     private val TAG = "MoveAdsorption"
 
     private val state = MoveAdsorptionState()
-
-    /**
-     * 是否在吸附动画中
-     */
-    private var isInAdsorptionProgress = false
 
     /**
      * 吸附x值
@@ -57,14 +54,14 @@ class MoveAdsorptionGestureDetector(
     override fun onMove(detector: BestGestureDetector): Boolean {
         state.rememberMovementTrack(detector)
         //如果动画在进行中则不重新测量
-        if (!isInAdsorptionProgress) {
+        if (!adsorption.isInAdsorptionProgress) {
             //步骤1 测量吸附位置
             val point = adsorption.analyze() //测量是否达到吸附条件
             //如果测量结果为0，表示不需要吸附
             if (point.x != 0 || point.y != 0) {
                 //步骤2 通知开始吸附
-                isInAdsorptionProgress = adsorptionListener.onBeginAdsorption(this)
-                if (!isInAdsorptionProgress) {
+                adsorption.isInAdsorptionProgress = adsorptionListener.onBeginAdsorption(this)
+                if (!adsorption.isInAdsorptionProgress) {
                     return false
                 }
                 //步骤3 开始吸附动画
@@ -106,10 +103,10 @@ class MoveAdsorptionGestureDetector(
                             adsorption.isAdsorptionV = point.y != 0
                         }
                         //步骤3.4 重置吸附动画进行中的状态
-                        isInAdsorptionProgress = false
+                        adsorption.isInAdsorptionProgress = false
                         adsorption.adsorptionValueAnim = null
                     }
-                    duration = 80
+                    duration = adsorption.duration
                 }
                 adsorption.adsorptionValueAnim?.start()
             }
@@ -129,7 +126,7 @@ class MoveAdsorptionGestureDetector(
             consumeX = moveX - consumeMoveX(moveX),
             consumeY = moveY - consumeMoveY(moveY)
         )
-        return isInAdsorptionProgress
+        return adsorption.isInAdsorptionProgress
     }
 
     /**
@@ -164,9 +161,8 @@ class MoveAdsorptionGestureDetector(
         val verticalCenterAnalyzes = arrayListOf<MoveAnalyzeResult>()
         val bottomAnalyzes = arrayListOf<MoveAnalyzeResult>()
         //1.2 获取磁性物体的绝对坐标
-        magnetic.target.getGlobalRect(magneticRect)
+        val magneticRectF = magnetic.target.getViewRawRectF(adsorption.magneticRectF)
         for (magnet in magnets) {
-            this.magnetRect.setEmpty()
             if (!magnet.target.isAttachedToWindow) {
                 //如果磁铁已经被移除则跳过
                 continue
@@ -178,7 +174,10 @@ class MoveAdsorptionGestureDetector(
             verticalAnalyze = null
             bottomAnalyze = null
             //步骤1.3 获取每个磁铁的绝对坐标
-            magnet.target.getGlobalRect(magnetRect)
+            val magneticRect = rectCoordinateMapToOtherCoordinate(magnet.target,
+                magnetic.target, magneticRectF).toViewRect(adsorption.magneticRect)
+            val magnetRect = magnet.target.getViewRawRectF(
+                adsorption.magnetRectF).toViewRect(adsorption.magnetRect)
             for (alignment in magnetic.alignments) {
                 //步骤1.4.1 测量水平方向Left、HorizontalCenter、Right三个点的吸附距离，三个点都要记录，最终取最三个点最接近的一个点作为吸附动画的x轴值
                 val horizontalAnalyzeFunc = horizontalAnalyze@{
@@ -238,18 +237,13 @@ class MoveAdsorptionGestureDetector(
             this.leftAnalyzes = leftAnalyzes
             this.horizontalCenterAnalyzes = horizontalCenterAnalyzes
             this.rightAnalyzes = rightAnalyzes
-            val mins = arrayListOf<Int>()
-            leftAnalyzes.minOfOrNull { it.distance }?.apply {
-                mins.add(this)
-            }
-            horizontalCenterAnalyzes.minOfOrNull { it.distance }?.apply {
-                mins.add(this)
-            }
-            rightAnalyzes.minOfOrNull { it.distance }?.apply {
-                mins.add(this)
-            }
+            val mins = arrayListOf(
+                leftAnalyzes.minDistanceOfOrNull(),
+                horizontalCenterAnalyzes.minDistanceOfOrNull(),
+                rightAnalyzes.minDistanceOfOrNull()
+            )
             //步骤1.6.1.2 在1.4.1测量出来的Left、HorizontalCenter、Right的结果做一个比较，获取最小的偏移量作为吸附动画x轴值
-            minXOffset = mins.minOfOrNull { it } ?: 0
+            minXOffset = mins.mapNotNull { it }.minOfOrNull { it } ?: 0
             //步骤1.6.1.3 如果x轴有吸附，记录下来是从哪边到哪边移动的，下次需要根据移动轨迹的条件重置吸附状态
             hMovementTrack = if (minXOffset < 0) {
                 MoveMovementTrack.RightToLeft
@@ -266,18 +260,13 @@ class MoveAdsorptionGestureDetector(
             this.topAnalyzes = topAnalyzes
             this.verticalCenterAnalyzes = verticalCenterAnalyzes
             this.bottomAnalyzes = bottomAnalyzes
-            val mins = arrayListOf<Int>()
-            topAnalyzes.minOfOrNull { it.distance }?.apply {
-                mins.add(this)
-            }
-            verticalCenterAnalyzes.minOfOrNull { it.distance }?.apply {
-                mins.add(this)
-            }
-            bottomAnalyzes.minOfOrNull { it.distance }?.apply {
-                mins.add(this)
-            }
+            val mins = arrayListOf(
+                topAnalyzes.minDistanceOfOrNull(),
+                verticalCenterAnalyzes.minDistanceOfOrNull(),
+                bottomAnalyzes.minDistanceOfOrNull()
+            )
             //步骤1.6.1.2 在1.4.2测量出来的Top、VerticalCenter、Right的结果做一个比较，获取最小的偏移量作为吸附动画y轴值
-            minYOffset = mins.minOfOrNull { it } ?: 0
+            minYOffset = mins.mapNotNull { it }.minOfOrNull { it } ?: 0
             //步骤1.6.1.3 如果y轴有吸附，记录下来是从哪边到哪边移动的，下次需要根据移动轨迹的条件重置吸附状态
             vMovementTrack = if (minYOffset < 0) {
                 MoveMovementTrack.BottomToTop
@@ -289,8 +278,6 @@ class MoveAdsorptionGestureDetector(
         } else {
             //已经吸附或处于免疫区，计算好的y轴吸附范围置空
         }
-        this.magneticRect.setEmpty()
-        this.magnetRect.setEmpty()
         return Point(minXOffset, minYOffset)
     }
 
@@ -726,6 +713,31 @@ class MoveAdsorptionGestureDetector(
     }
 
     /**
+     * 计算出最小值，也就是最接近吸附点的距离
+     */
+    private fun ArrayList<MoveAnalyzeResult>.minDistanceOfOrNull(): Int? {
+        val tempRect = adsorption.matrixTempRectF
+        val magnetic = adsorption.magnetic.target
+        var minValue: Float? = null
+        for (result in this) {
+            tempRect.set(0f, 0f, result.distance.toFloat(), 0f)
+            rectCoordinateMapToOtherCoordinate(magnetic, result.magnet.target, tempRect)
+            //矩阵变换后无法得知原始的值是正的还是负的，需要多一步判断原始值
+            val value = if (result.distance > 0) {
+                tempRect.width()
+            } else {
+                -tempRect.width()
+            }
+            minValue = if (minValue == null) {
+                value
+            } else {
+                min(minValue, value)
+            }
+        }
+        return minValue?.toInt()
+    }
+
+    /**
      * 只有磁性物体被移除的时候才释放
      */
     private fun MoveAdsorption.release() {
@@ -738,7 +750,9 @@ class MoveAdsorptionGestureDetector(
         adsorptionValueAnim?.cancel()
         adsorptionValueAnim = null
         magneticRect.setEmpty()
+        magneticRectF.setEmpty()
         magnetRect.setEmpty()
+        magnetRectF.setEmpty()
         hMovementTrack = MoveMovementTrack.None
         vMovementTrack = MoveMovementTrack.None
         pendingConsumeHRidThreshold = 0f

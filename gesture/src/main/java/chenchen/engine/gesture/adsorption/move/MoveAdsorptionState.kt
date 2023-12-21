@@ -1,5 +1,6 @@
 package chenchen.engine.gesture.adsorption.move
 
+import android.animation.ValueAnimator
 import chenchen.engine.gesture.BestGestureDetector
 import chenchen.engine.gesture.MoveMovementTrack
 import chenchen.engine.gesture.MoveMovementTrack.*
@@ -9,7 +10,7 @@ import chenchen.engine.gesture.MoveMovementTrack.*
  * @author: chenchen
  * @since: 2023/4/27 10:11
  */
-class MoveAdsorptionState {
+internal class MoveAdsorptionState {
 
     /**
      * 水平滑动轨迹
@@ -20,7 +21,6 @@ class MoveAdsorptionState {
      * 垂直滑动轨迹
      */
     var vMovementTrack: MoveMovementTrack = None
-
 
     /**
      * 记录
