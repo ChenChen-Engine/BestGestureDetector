@@ -27,11 +27,6 @@ class ScaleAdsorptionGestureDetector(
     private val state = ScaleAdsorptionState()
 
     /**
-     * 是否在吸附动画中
-     */
-    private var isInAdsorptionProgress = false
-
-    /**
      * 吸附时的绝对缩放值，使用方式view.scaleX = adsorptionScale
      * 因为执行动画无法像手势拖动一样得到基于自身的缩放比，即使通过计算也无法获取精准的缩放比
      * 所以采用绝对缩放值做动画。最主要的原因还是我不会计算
@@ -39,18 +34,17 @@ class ScaleAdsorptionGestureDetector(
     var adsorptionScale = 1f
         private set
 
-
     override fun onScale(detector: BestGestureDetector): Boolean {
         state.rememberMovementTrack(detector)
         //如果动画在进行中则不重新测量
-        if (!isInAdsorptionProgress) {
+        if (!adsorption.isInAdsorptionProgress) {
             //步骤1 测量吸附角度
             val scale = adsorption.analyze() //测量是否达到吸附条件
             //如果测量结果为0，表示不需要吸附
             if (scale != 0f) {
                 //步骤2 通知开始吸附
-                isInAdsorptionProgress = adsorptionListener.onBeginAdsorption(this)
-                if (!isInAdsorptionProgress) {
+                adsorption.isInAdsorptionProgress = adsorptionListener.onBeginAdsorption(this)
+                if (!adsorption.isInAdsorptionProgress) {
                     return false
                 }
                 //步骤3 开始吸附动画
@@ -78,10 +72,10 @@ class ScaleAdsorptionGestureDetector(
                             adsorption.isAdsorptionScale = true
                         }
                         //步骤3.4 重置吸附动画进行中的状态
-                        isInAdsorptionProgress = false
+                        adsorption.isInAdsorptionProgress = false
                         adsorption.adsorptionValueAnim = null
                     }
-                    duration = 80
+                    duration = adsorption.duration
                 }
                 adsorption.adsorptionValueAnim?.start()
             }
@@ -95,7 +89,7 @@ class ScaleAdsorptionGestureDetector(
         adsorption.consumeScaleRidThreshold((safeScale() * scaleFactor) - safeScale())
         //步骤4 如果处于吸附中先要把挣脱值消费掉才能缩放View，所以这里把缩放事件消费掉，不让View缩放
         detector.consumeScale(scaleFactor - consumeScale(scaleFactor))
-        return isInAdsorptionProgress
+        return adsorption.isInAdsorptionProgress
     }
 
     private fun ScaleAdsorption.analyze(): Float {

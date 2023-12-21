@@ -19,7 +19,16 @@ class ScaleAdsorption(
      * 磁铁列表
      */
     val magnets: List<ScaleMagnet>,
+    /**
+     * 吸附动画执行时长
+     */
+    val duration: Long = 30L,
 ) {
+    /**
+     * 是否在吸附动画中
+     */
+    internal var isInAdsorptionProgress = false
+
     /**
      * 吸附动画
      */

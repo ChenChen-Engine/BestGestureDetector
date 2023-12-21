@@ -36,12 +36,12 @@ data class MoveAdsorption(
     /**
      * 是否在吸附动画中
      */
-    var isInAdsorptionProgress = false
+    internal var isInAdsorptionProgress = false
 
     /**
      * 吸附动画
      */
-    var adsorptionValueAnim: ValueAnimator? = null
+    internal var adsorptionValueAnim: ValueAnimator? = null
 
     /**
      * 磁性物体的坐标，复用

@@ -27,28 +27,22 @@ class RotateAdsorptionGestureDetector(
     private val state = RotteAdsorptionState()
 
     /**
-     * 是否在吸附动画中
-     */
-    private var isInAdsorptionProgress = false
-
-    /**
      * 吸附rotation值
      */
     var adsorptionRotation = 0
         private set
 
-
     override fun onRotate(detector: BestGestureDetector): Boolean {
         state.rememberMovementTrack(detector)
         //如果动画在进行中则不重新测量
-        if (!isInAdsorptionProgress) {
+        if (!adsorption.isInAdsorptionProgress) {
             //步骤1 测量吸附角度
             val rotation = adsorption.analyze() //测量是否达到吸附条件
             //如果测量结果为0，表示不需要吸附
             if (rotation != 0) {
                 //步骤2 通知开始吸附
-                isInAdsorptionProgress = adsorptionListener.onBeginAdsorption(this)
-                if (!isInAdsorptionProgress) {
+                adsorption.isInAdsorptionProgress = adsorptionListener.onBeginAdsorption(this)
+                if (!adsorption.isInAdsorptionProgress) {
                     return false
                 }
                 //步骤3 开始吸附动画
@@ -77,10 +71,10 @@ class RotateAdsorptionGestureDetector(
                             adsorption.isAdsorptionRotation = true
                         }
                         //步骤3.4 重置吸附动画进行中的状态
-                        isInAdsorptionProgress = false
+                        adsorption.isInAdsorptionProgress = false
                         adsorption.adsorptionValueAnim = null
                     }
-                    duration = 80
+                    duration = adsorption.duration
                 }
                 adsorption.adsorptionValueAnim?.start()
             }
@@ -94,7 +88,7 @@ class RotateAdsorptionGestureDetector(
         adsorption.consumeRotationRidThreshold(rotation)
         //步骤4 如果处于吸附中先要把挣脱值消费掉才能旋转View，所以这里把旋转事件消费掉，不让View旋转
         detector.consumeRotation(rotation - consumeRotation(rotation))
-        return isInAdsorptionProgress
+        return adsorption.isInAdsorptionProgress
     }
 
     private fun RotateAdsorption.analyze(): Int {
