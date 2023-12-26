@@ -9,7 +9,7 @@ import chenchen.engine.gesture.ConstrainedAlignment.*
 import chenchen.engine.gesture.ConstraintAlignment
 import chenchen.engine.gesture.MoveMovementTrack
 import chenchen.engine.gesture.getViewRawRectF
-import chenchen.engine.gesture.rectCoordinateMapToOtherCoordinate
+import chenchen.engine.gesture.coordinateMapToCoordinate
 import chenchen.engine.gesture.toViewRect
 import kotlin.math.abs
 
@@ -67,6 +67,11 @@ data class MoveAdsorption(
      * 矩阵转换临时使用的，复用
      */
     internal val matrixTempRectF = RectF()
+
+    /**
+     * 矩阵转换临时使用的，复用
+     */
+    internal val matrixTempRect = Rect()
 
     /**
      * 吸住左边的磁铁
@@ -270,7 +275,7 @@ data class MoveAdsorption(
         ) ?: return 0
         val magnet = measureResult.magnet
         val magneticRectF = magnetic.target.getViewRawRectF(magneticRectF)
-        val magneticRect = rectCoordinateMapToOtherCoordinate(
+        val magneticRect = coordinateMapToCoordinate(
             magnet.target, magnetic.target, magneticRectF).toViewRect(magneticRect)
         val magnetRect = magnet.target.getViewRawRectF(magnetRectF).toViewRect(magnetRect)
         val distance = when (measureResult.alignment) {
@@ -286,16 +291,17 @@ data class MoveAdsorption(
             else -> 0
         }
         matrixTempRectF.set(0f, 0f, distance.toFloat(), 0f)
-        rectCoordinateMapToOtherCoordinate(magnetic.target, magnet.target, matrixTempRectF)
+        coordinateMapToCoordinate(magnetic.target,
+            magnet.target, matrixTempRectF).toViewRect(matrixTempRect)
         //矩阵变换后无法得知原始的值是正的还是负的，需要多一步判断原始值
         val value = if (distance > 0) {
-            matrixTempRectF.width()
+            matrixTempRect.width()
         } else {
-            -matrixTempRectF.width()
+            -matrixTempRect.width()
         }
         magneticRect.setEmpty()
         magnetRect.setEmpty()
-        return value.toInt()
+        return value
     }
 
     /**
@@ -310,7 +316,7 @@ data class MoveAdsorption(
         ) ?: return 0
         val magnet = measureResult.magnet
         val magneticRectF = magnetic.target.getViewRawRectF(magneticRectF)
-        val magneticRect = rectCoordinateMapToOtherCoordinate(
+        val magneticRect = coordinateMapToCoordinate(
             magnet.target, magnetic.target, magneticRectF).toViewRect(magneticRect)
         val magnetRect = magnet.target.getViewRawRectF(magnetRectF).toViewRect(magnetRect)
         val distance = when (measureResult.alignment) {
@@ -326,16 +332,17 @@ data class MoveAdsorption(
             else -> 0
         }
         matrixTempRectF.set(0f, 0f, distance.toFloat(), 0f)
-        rectCoordinateMapToOtherCoordinate(magnetic.target, magnet.target, matrixTempRectF)
+        coordinateMapToCoordinate(magnetic.target,
+            magnet.target, matrixTempRectF).toViewRect(matrixTempRect)
         //矩阵变换后无法得知原始的值是正的还是负的，需要多一步判断原始值
         val value = if (distance > 0) {
-            matrixTempRectF.width()
+            matrixTempRect.width()
         } else {
-            -matrixTempRectF.width()
+            -matrixTempRect.width()
         }
         magneticRect.setEmpty()
         magnetRect.setEmpty()
-        return value.toInt()
+        return value
     }
 
     /**

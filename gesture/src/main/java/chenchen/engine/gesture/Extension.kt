@@ -2,7 +2,6 @@ package chenchen.engine.gesture
 
 import android.app.Activity
 import android.content.Context
-import android.graphics.Point
 import android.graphics.PointF
 import android.graphics.Rect
 import android.graphics.RectF
@@ -245,7 +244,7 @@ fun View.reverseTransformTouchEvent(event: MotionEvent): MotionEvent {
  *  }
  *```
  */
-fun rectCoordinateMapToOtherCoordinate(source: View, target: View, rectF: RectF): RectF {
+fun coordinateMapToCoordinate(source: View, target: View, rectF: RectF): RectF {
     if (source == target) {
         return rectF
     }
@@ -273,52 +272,66 @@ fun rectCoordinateMapToOtherCoordinate(source: View, target: View, rectF: RectF)
         sourceParent = sourceParent.parent as? ViewGroup
     }
 
-    //去掉公共父容器。特殊情况source往上转一层就可能是公共父容器了
-    //      /                 /
-    //    /  \          source  target
-    //  /     \
-    //source   \
-    //         target
-    sourceParents.removeLastOrNull()
-    targetParents.removeLastOrNull()
-
-    source.reverseTransformRectF(rectF)
+    source.doChildReverseTransformParent(rectF)
     for (parent in sourceParents) {
-        parent.reverseTransformRectF(rectF)
+        parent.doChildReverseTransformParent(rectF)
     }
     for (parent in targetParents) {
-        parent.transformRectF(rectF)
+        parent.doParentTransformChild(rectF)
     }
-    target.transformRectF(rectF)
+    target.doParentTransformChild(rectF)
+    return source.doSelfReverseTransform(rectF)
+}
+
+/**
+ * 将[RectF]从[ViewGroup]坐标体系逆转成子[View]的坐标系
+ */
+fun View.doParentTransformChild(rectF: RectF): RectF {
+    val parent = parent as? ViewGroup ?: return rectF
+    val matrix = matrix
+    matrix.reset()
+    matrix.preScale(abs(parent.scaleX), abs(parent.scaleY), parent.left + parent.pivotX, parent.top + parent.pivotY)
+    matrix.preTranslate(parent.left + parent.scrollX.toFloat(), parent.top + parent.scrollY.toFloat())
+    matrix.mapRect(rectF)
     return rectF
 }
 
 /**
  * 将[RectF]从[View]坐标体系逆转成父容器[ViewGroup]的坐标系
  */
-fun View.reverseTransformRectF(rectF: RectF): RectF {
+fun View.doChildReverseTransformParent(rectF: RectF): RectF {
     val parent = parent as? ViewGroup ?: return rectF
     val matrix = matrix
     matrix.reset()
-    matrix.preTranslate(-parent.scrollX.toFloat(), -parent.scrollY.toFloat())
-    matrix.preTranslate(-parent.left.toFloat(), -parent.top.toFloat())
+    matrix.preTranslate(parent.scrollX - parent.left.toFloat(), parent.scrollY.toFloat() - parent.top)
     matrix.preScale(1 / abs(parent.scaleX), 1 / abs(parent.scaleY), parent.left + parent.pivotX, parent.top + parent.pivotY)
-    matrix.preRotate(parent.rotation, parent.left + parent.pivotX, parent.top + parent.pivotY)
     matrix.mapRect(rectF)
     return rectF
 }
 
 /**
- * 将[RectF]从[ViewGroup]坐标体系逆转成子[View]的坐标系
+ * 以自身为坐标系将坐标转换进入，一般[ViewGroup]比较常用
+ * 使用场景：需要将其他坐标系的坐标传入自身内部
  */
-fun View.transformRectF(rectF: RectF): RectF {
-    val parent = parent as? ViewGroup ?: return rectF
+fun View.doSelfTransform(rectF: RectF): RectF {
     val matrix = matrix
     matrix.reset()
-    matrix.preRotate(parent.rotation, parent.left + parent.pivotX, parent.top + parent.pivotY)
-    matrix.preScale(abs(parent.scaleX), abs(parent.scaleY), parent.left + parent.pivotX, parent.top + parent.pivotY)
-    matrix.preTranslate(parent.left.toFloat(), parent.top.toFloat())
-    matrix.preTranslate(parent.scrollX.toFloat(), parent.scrollY.toFloat())
+    matrix.preScale(abs(scaleX), abs(scaleY), left + pivotX, top + pivotY)
+    matrix.preTranslate(scrollX.toFloat() + left, scrollY.toFloat() + top)
+    matrix.mapRect(rectF)
+    return rectF
+}
+
+/**
+ * 以自身为坐标系将坐标系逆转出去，一般[ViewGroup]比较常用
+ * 使用场景：将某个[View]的坐标逆转出去，不过[doChildReverseTransformParent]也可以实现
+ * 这里可以用于以自身为坐标系，将任意构造的坐标逆转出去
+ */
+fun View.doSelfReverseTransform(rectF: RectF): RectF {
+    val matrix = matrix
+    matrix.reset()
+    matrix.preTranslate(-(scrollX.toFloat() + left), -(scrollY.toFloat() + top))
+    matrix.preScale(1 / abs(scaleX), 1 / abs(scaleY), left + pivotX, top + pivotY)
     matrix.mapRect(rectF)
     return rectF
 }
@@ -334,7 +347,6 @@ fun View?.getViewRawRectF(rectF: RectF = RectF()): RectF {
         val cacheMatrix = matrix
         cacheMatrix.reset()
         cacheMatrix.postScale(abs(scaleX), abs(scaleY), left + pivotX, top + pivotY)
-        cacheMatrix.postRotate(rotation, left + pivotX, top + pivotY)
         cacheMatrix.mapRect(rectF)
     }
     return rectF
