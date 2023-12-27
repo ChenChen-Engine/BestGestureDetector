@@ -85,7 +85,7 @@ internal fun Float.nullIf(equals: Float?): Float? {
  * @param y 相对[source]的y坐标
  * @return 如果映射失败，则返回null
  */
-fun touchLocationMapToOtherLocation(source: View, target: View, x: Float, y: Float): PointF? {
+fun locationMapToLocation(source: View, target: View, x: Float, y: Float): PointF? {
     //查找的是同一个，直接返回
     if (source == target) {
         return PointF(x, y)
@@ -93,13 +93,13 @@ fun touchLocationMapToOtherLocation(source: View, target: View, x: Float, y: Flo
     //如果target是source的直接子View，立即返回
     if (source is ViewGroup) {
         if (source.indexOfChild(target) != -1) {
-            return target.transformTouchLocation(x, y)
+            return target.doParentTransformChildLocation(x, y)
         }
     }
     //如果source是target的直接子View，立即返回
     if (target is ViewGroup) {
         if (target.indexOfChild(target) != -1) {
-            return source.transformTouchLocation(x, y)
+            return source.doParentTransformChildLocation(x, y)
         }
     }
     //查找最小公倍父类
@@ -139,16 +139,16 @@ fun touchLocationMapToOtherLocation(source: View, target: View, x: Float, y: Flo
     targetParents.removeLastOrNull()
 
     //source往上转换
-    var sourceParentLocation = source.reverseTransformTouchLocation(x, y)
+    var sourceParentLocation = source.doChildReverseTransformParentLocation(x, y)
     for (parent in sourceParents) {
-        sourceParentLocation = parent.reverseTransformTouchLocation(sourceParentLocation.x, sourceParentLocation.y)
+        sourceParentLocation = parent.doChildReverseTransformParentLocation(sourceParentLocation.x, sourceParentLocation.y)
     }
     //转到公共父容器，就往下转换
     for (parent in targetParents) {
-        sourceParentLocation = parent.transformTouchLocation(sourceParentLocation.x, sourceParentLocation.y)
+        sourceParentLocation = parent.doParentTransformChildLocation(sourceParentLocation.x, sourceParentLocation.y)
     }
     //最后转换给target
-    return target.transformTouchLocation(sourceParentLocation.x, sourceParentLocation.y)
+    return target.doParentTransformChildLocation(sourceParentLocation.x, sourceParentLocation.y)
 }
 
 /**
@@ -156,7 +156,7 @@ fun touchLocationMapToOtherLocation(source: View, target: View, x: Float, y: Flo
  * @param x 父[View]的x坐标
  * @param y 父[View]的y坐标
  */
-fun View.transformTouchLocation(x: Float, y: Float): PointF {
+fun View.doParentTransformChildLocation(x: Float, y: Float): PointF {
     val parent = parent as? ViewGroup ?: return PointF(x, y)
     val offsetX = x + (parent.scrollX - this.left)
     val offsetY = y + (parent.scrollY - this.top)
@@ -178,7 +178,7 @@ fun View.transformTouchLocation(x: Float, y: Float): PointF {
  * @param x 子[View]的x坐标
  * @param y 子[View]的y坐标
  */
-fun View.reverseTransformTouchLocation(x: Float, y: Float): PointF {
+fun View.doChildReverseTransformParentLocation(x: Float, y: Float): PointF {
     val parent = parent as ViewGroup
     val points = floatArrayOf(x, y)
     if (!matrix.isIdentity) {
@@ -193,7 +193,7 @@ fun View.reverseTransformTouchLocation(x: Float, y: Float): PointF {
  * 将父View事件转成子View事件
  * @param event 父View的事件
  */
-fun View.transformTouchEvent(event: MotionEvent): MotionEvent {
+fun View.doParentTransformChildEvent(event: MotionEvent): MotionEvent {
     val parent = parent as? ViewGroup ?: return event
     val transformedEvent = MotionEvent.obtain(event)
     val offsetX = parent.scrollX - this.left
@@ -213,7 +213,7 @@ fun View.transformTouchEvent(event: MotionEvent): MotionEvent {
  * 将子View自己的事件逆转成父View的事件，这里注意，转换的结果和原始事件有精度误差，等于比较是没用的
  * @param event 子View自己的事件
  */
-fun View.reverseTransformTouchEvent(event: MotionEvent): MotionEvent {
+fun View.doChildReverseTransformParentEvent(event: MotionEvent): MotionEvent {
     val parent = parent as? ViewGroup ?: return event
     val transformedEvent = MotionEvent.obtain(event)
     if (!matrix.isIdentity) {
@@ -230,19 +230,23 @@ fun View.reverseTransformTouchEvent(event: MotionEvent): MotionEvent {
  * 将rect从[source]的坐标系映射到[target]坐标系
  * @param source 需要转换的[View]，确保left,top,right,bottom是正确的
  * @param target 将要转换到这个[View]所在的坐标系，确保left,top,right,bottom是正确的
- * @param rectF 需要映射的矩形，如果是随意提供的矩形，不需要在意特殊情况，如果是从[View]获取的，请参考以下代码：
- *```
- *  fun View.getRectF(): RectF {
- *     val rectF = RectF(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat())
- *     if (!matrix.isIdentity) {
- *          val matrix = matrix
- *          matrix.reset()
- *          matrix.postScale(abs(scaleX), abs(scaleY), left + pivotX, top + pivotY)
- *          matrix.mapRect(rectF)
- *     }
- *     return rectF
- *  }
- *```
+ * @param rectF 需要映射的矩形，如果是随意提供的矩形，不需要在意特殊情况，如果是从[View]获取的，请参考这些方法：
+ * [getViewRectF]、[getViewScaleRectF]、[getViewRawRectF]
+ * #
+ * PS: 这里的命名的含义有点怪，原本我的意思是想将[source]所在的坐标系的坐标转换到[target]的坐标系，但实践后发现
+ * 原本想传给[source]的控件传给[target]，原本传给[target]的控件传给[source]反而能得到我预期的数据，比如：
+ * 我打算将`A`容器的`a1`控件的坐标转换到`B`容器的`Bb`容器的坐标里，按原本的设计是
+ * ```
+ * coordinateMapToCoordinate(a1, Bb, rectF)
+ * ```
+ * 但这样计算的数据反而不符合我的预期，而
+ * ```
+ * coordinateMapToCoordinate(Bb, a1, rectF)
+ * ```
+ * 可以得到我预期的数据
+ * #
+ * ## 从代码流程上看，先逆转到公共坐标系，再转换到目标坐标系，写法是没错的，所以并不打算修改命名，调用时注意下
+ * ## 先尝试`coordinateMapToCoordinate(Bb, a1, rectF)`的用法，不行再换过来
  */
 fun coordinateMapToCoordinate(source: View, target: View, rectF: RectF): RectF {
     if (source == target) {
@@ -272,21 +276,21 @@ fun coordinateMapToCoordinate(source: View, target: View, rectF: RectF): RectF {
         sourceParent = sourceParent.parent as? ViewGroup
     }
 
-    source.doChildReverseTransformParent(rectF)
+    source.doChildReverseTransformParentRectF(rectF)
     for (parent in sourceParents) {
-        parent.doChildReverseTransformParent(rectF)
+        parent.doChildReverseTransformParentRectF(rectF)
     }
     for (parent in targetParents) {
-        parent.doParentTransformChild(rectF)
+        parent.doParentTransformChildRectF(rectF)
     }
-    target.doParentTransformChild(rectF)
-    return source.doSelfReverseTransform(rectF)
+    target.doParentTransformChildRectF(rectF)
+    return source.doSelfReverseTransformRectF(rectF)
 }
 
 /**
  * 将[RectF]从[ViewGroup]坐标体系逆转成子[View]的坐标系
  */
-fun View.doParentTransformChild(rectF: RectF): RectF {
+fun View.doParentTransformChildRectF(rectF: RectF): RectF {
     val parent = parent as? ViewGroup ?: return rectF
     val matrix = matrix
     matrix.reset()
@@ -300,7 +304,7 @@ fun View.doParentTransformChild(rectF: RectF): RectF {
 /**
  * 将[RectF]从[View]坐标体系逆转成父容器[ViewGroup]的坐标系
  */
-fun View.doChildReverseTransformParent(rectF: RectF): RectF {
+fun View.doChildReverseTransformParentRectF(rectF: RectF): RectF {
     val parent = parent as? ViewGroup ?: return rectF
     val matrix = matrix
     matrix.reset()
@@ -315,7 +319,7 @@ fun View.doChildReverseTransformParent(rectF: RectF): RectF {
  * 以自身为坐标系将坐标转换进入，一般[ViewGroup]比较常用
  * 使用场景：需要将其他坐标系的坐标传入自身内部
  */
-fun View.doSelfTransform(rectF: RectF): RectF {
+fun View.doSelfTransformRectF(rectF: RectF): RectF {
     val matrix = matrix
     matrix.reset()
     matrix.preScale(abs(scaleX), abs(scaleY), left + pivotX, top + pivotY)
@@ -326,10 +330,10 @@ fun View.doSelfTransform(rectF: RectF): RectF {
 
 /**
  * 以自身为坐标系将坐标系逆转出去，一般[ViewGroup]比较常用
- * 使用场景：将某个[View]的坐标逆转出去，不过[doChildReverseTransformParent]也可以实现
+ * 使用场景：将某个[View]的坐标逆转出去，不过[doChildReverseTransformParentRectF]也可以实现
  * 这里可以用于以自身为坐标系，将任意构造的坐标逆转出去
  */
-fun View.doSelfReverseTransform(rectF: RectF): RectF {
+fun View.doSelfReverseTransformRectF(rectF: RectF): RectF {
     val matrix = matrix
     matrix.reset()
     matrix.preTranslate(-(scrollX.toFloat() + left), -(scrollY.toFloat() + top))
@@ -426,7 +430,7 @@ fun View.doParentDispatchTouchEvent(event: MotionEvent): Boolean {
  * 将手势转换为子View的坐标系
  * @param view 需要转换的子View
  */
-fun BestGestureDetector.transform(view: View): BestGestureDetector {
+fun BestGestureDetector.doParentTransformChild(view: View): BestGestureDetector {
     val parent = view.parent as? ViewGroup ?: return this
     val offsetX = parent.scrollX - view.left
     val offsetY = parent.scrollY - view.top
@@ -445,7 +449,7 @@ fun BestGestureDetector.transform(view: View): BestGestureDetector {
  * 将手势转换为父View的坐标系
  * @param view 子View自己
  */
-fun BestGestureDetector.reverseTransform(view: View): BestGestureDetector {
+fun BestGestureDetector.doChildReverseTransformParent(view: View): BestGestureDetector {
     val parent = view.parent as? ViewGroup ?: return this
     if (!view.matrix.isIdentity) {
         this.transformAllEvent(view.matrix)
