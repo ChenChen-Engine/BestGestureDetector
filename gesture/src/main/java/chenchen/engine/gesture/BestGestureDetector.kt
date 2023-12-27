@@ -526,6 +526,9 @@ class BestGestureDetector private constructor(
 
     /**
      * 获取移动偏移量，使用方式view.x += moveX
+     * PS：没有变换的情况下使用[View.offsetLeftAndRight]是代替[View.X]是没问题的
+     * 但如果经过变换再使用[View.offsetLeftAndRight]的方式更新，手势会变得很奇怪，
+     * 原因是left、right是不会根据变换而改变
      */
     val moveX: Float
         get() {
@@ -536,6 +539,9 @@ class BestGestureDetector private constructor(
 
     /**
      * 获取移动偏移量，使用方式view.y += moveY
+     * PS：没有变换的情况下使用[View.offsetTopAndBottom]是代替[View.Y]是没问题的
+     * 但如果经过变换再使用[View.offsetTopAndBottom]的方式更新，手势会变得很奇怪，
+     * 原因是top、bottom是不会根据变换而改变
      */
     val moveY: Float
         get() {
@@ -827,7 +833,7 @@ class BestGestureDetector private constructor(
      */
     fun getRawFocus(event: MotionEventCompat): PointF {
         val focus = getMultiFingerMidPoint(event)
-        if(context is Activity){
+        if (context is Activity) {
             focus.y -= context.statusBarHeight - context.actionBarHeight
         }
         return focus
@@ -934,7 +940,7 @@ class BestGestureDetector private constructor(
     /**
      * 设置所有事件的绝对位置
      */
-    fun setAllEventLocation(x: Float, y: Float){
+    fun setAllEventLocation(x: Float, y: Float) {
         state.setAllEventLocation(x, y)
     }
 
@@ -1054,7 +1060,7 @@ class BestGestureDetector private constructor(
      */
     fun copy(): BestGestureDetector {
         return BestGestureDetector(
-                context, state.copy(
+            context, state.copy(
                 startEvent = startEvent,
                 currentEvent = currentEvent,
                 previousEvent = previousEvent,
@@ -1062,6 +1068,6 @@ class BestGestureDetector private constructor(
                 pointerIds = ArrayList(state.pointerIds),
                 currentTrackPointerIds = ArrayList(state.currentTrackPointerIds),
                 previousTrackPointerIds = ArrayList(state.previousTrackPointerIds),
-        ))
+            ))
     }
 }

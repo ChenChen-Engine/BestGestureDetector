@@ -18,11 +18,14 @@ import chenchen.engine.gesture.toViewRect
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import android.view.View
 
 /**
  * @author: chenchen
  * @since: 2023/4/25 17:38
  * 移动吸附手势
+ * list:
+ * - [ ] 对[View]所在的坐标系变换过(缩放、旋转)的体验不友好
  */
 class MoveAdsorptionGestureDetector(
     private val adsorption: MoveAdsorption,
