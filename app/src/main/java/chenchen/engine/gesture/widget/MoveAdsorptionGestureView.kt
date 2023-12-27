@@ -16,6 +16,7 @@ import chenchen.engine.gesture.adsorption.move.MoveMagnet
 import chenchen.engine.gesture.adsorption.move.MoveMagnetic
 import chenchen.engine.gesture.adsorption.move.MoveAdsorptionGestureDetector
 import chenchen.engine.gesture.adsorption.move.OnMoveAdsorptionListener
+import chenchen.engine.gesture.demo.R
 
 class MoveAdsorptionGestureView : View {
 
@@ -42,9 +43,10 @@ class MoveAdsorptionGestureView : View {
     }
 
     val adsorptionGesture by lazy {
+        val parent = rootView.findViewById<MoveAdsorptionViewGroup>(R.id.group)
         val adsorption = MoveAdsorption(
                 MoveMagnetic(this, ConstrainedAlignment.all()),
-                arrayListOf(MoveMagnet(parent as View, ConstraintAlignment.all())),
+                arrayListOf(MoveMagnet(parent, ConstraintAlignment.all())),
         )
         MoveAdsorptionGestureDetector(adsorption, object : OnMoveAdsorptionListener {
             override fun onBeginAdsorption(detector: MoveAdsorptionGestureDetector): Boolean {
