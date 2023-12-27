@@ -290,6 +290,7 @@ fun View.doParentTransformChild(rectF: RectF): RectF {
     val parent = parent as? ViewGroup ?: return rectF
     val matrix = matrix
     matrix.reset()
+    matrix.preRotate(parent.rotation, parent.left + parent.pivotX, parent.top + parent.pivotY)
     matrix.preScale(abs(parent.scaleX), abs(parent.scaleY), parent.left + parent.pivotX, parent.top + parent.pivotY)
     matrix.preTranslate(parent.left + parent.scrollX.toFloat(), parent.top + parent.scrollY.toFloat())
     matrix.mapRect(rectF)
@@ -305,6 +306,7 @@ fun View.doChildReverseTransformParent(rectF: RectF): RectF {
     matrix.reset()
     matrix.preTranslate(parent.scrollX - parent.left.toFloat(), parent.scrollY.toFloat() - parent.top)
     matrix.preScale(1 / abs(parent.scaleX), 1 / abs(parent.scaleY), parent.left + parent.pivotX, parent.top + parent.pivotY)
+    matrix.preRotate(parent.rotation, parent.left + parent.pivotX, parent.top + parent.pivotY)
     matrix.mapRect(rectF)
     return rectF
 }
@@ -332,12 +334,13 @@ fun View.doSelfReverseTransform(rectF: RectF): RectF {
     matrix.reset()
     matrix.preTranslate(-(scrollX.toFloat() + left), -(scrollY.toFloat() + top))
     matrix.preScale(1 / abs(scaleX), 1 / abs(scaleY), left + pivotX, top + pivotY)
+    matrix.preRotate(rotation, left + pivotX, top + pivotY)
     matrix.mapRect(rectF)
     return rectF
 }
 
 /**
- * 获取[View]原始矩形，比如原本是300*300，缩放了0.5，那获取到的就是150*150
+ * 获取[View]原始矩形，比如原本是300*300，无论缩放了还是旋转了，获取到的就是300*300
  * @param rectF 主动传可实现一定的性能优化，建议主动传入
  */
 fun View?.getViewRawRectF(rectF: RectF = RectF()): RectF {
@@ -354,12 +357,46 @@ fun View?.getViewRawRectF(rectF: RectF = RectF()): RectF {
 
 
 /**
+ * 获取[View]缩放后的矩形，比如原本是300*300，缩放了0.5，那获取到的就是150*150
+ * @param rectF 主动传可实现一定的性能优化，建议主动传入
+ */
+fun View?.getViewScaleRectF(rectF: RectF = RectF()): RectF {
+    this ?: return rectF
+    rectF.set(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat())
+    if (!matrix.isIdentity) {
+        val cacheMatrix = matrix
+        cacheMatrix.reset()
+        cacheMatrix.postScale(abs(scaleX), abs(scaleY), left + pivotX, top + pivotY)
+        cacheMatrix.mapRect(rectF)
+    }
+    return rectF
+}
+
+/**
+ * 获取[View]矩形，看到的多大就是多大，包含了缩放，旋转
+ * @param rectF 主动传可实现一定的性能优化，建议主动传入
+ */
+fun View?.getViewRectF(rectF: RectF = RectF()): RectF {
+    this ?: return rectF
+    rectF.set(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat())
+    if (!matrix.isIdentity) {
+        val cacheMatrix = matrix
+        cacheMatrix.reset()
+        cacheMatrix.postScale(abs(scaleX), abs(scaleY), left + pivotX, top + pivotY)
+        cacheMatrix.postRotate(rotation, left + pivotX, top + pivotY)
+        cacheMatrix.mapRect(rectF)
+    }
+    return rectF
+}
+
+
+/**
  * 将RectF转换成[View]专用的Rect
  * @param rect 主动传可实现一定的性能优化，建议主动传入
  */
 fun RectF.toViewRect(rect: Rect = Rect()): Rect {
-    rect.set(floor(left.toDouble()).toInt(), floor(top.toDouble()).toInt(),
-        ceil(right.toDouble()).toInt(), ceil(bottom.toDouble()).toInt())
+    rect.set(floor(left).toInt(), floor(top).toInt(),
+        ceil(right).toInt(), ceil(bottom).toInt())
     return rect
 }
 

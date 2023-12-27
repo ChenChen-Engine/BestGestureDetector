@@ -8,8 +8,8 @@ import chenchen.engine.gesture.ConstrainedAlignment
 import chenchen.engine.gesture.ConstrainedAlignment.*
 import chenchen.engine.gesture.ConstraintAlignment
 import chenchen.engine.gesture.MoveMovementTrack
-import chenchen.engine.gesture.getViewRawRectF
 import chenchen.engine.gesture.coordinateMapToCoordinate
+import chenchen.engine.gesture.getViewRectF
 import chenchen.engine.gesture.toViewRect
 import kotlin.math.abs
 
@@ -274,10 +274,10 @@ data class MoveAdsorption(
             leftAnalyzes, horizontalCenterAnalyzes, rightAnalyzes
         ) ?: return 0
         val magnet = measureResult.magnet
-        val magneticRectF = magnetic.target.getViewRawRectF(magneticRectF)
+        val magneticRectF = magnetic.target.getViewRectF(magneticRectF)
         val magneticRect = coordinateMapToCoordinate(
             magnet.target, magnetic.target, magneticRectF).toViewRect(magneticRect)
-        val magnetRect = magnet.target.getViewRawRectF(magnetRectF).toViewRect(magnetRect)
+        val magnetRect = magnet.target.getViewRectF(magnetRectF).toViewRect(magnetRect)
         val distance = when (measureResult.alignment) {
             LeftToLeft -> magneticRect.left - magnetRect.left
             LeftToHorizontalCenter -> magneticRect.left - magnetRect.centerX()
@@ -315,10 +315,10 @@ data class MoveAdsorption(
             topAnalyzes, verticalCenterAnalyzes, bottomAnalyzes
         ) ?: return 0
         val magnet = measureResult.magnet
-        val magneticRectF = magnetic.target.getViewRawRectF(magneticRectF)
+        val magneticRectF = magnetic.target.getViewRectF(magneticRectF)
         val magneticRect = coordinateMapToCoordinate(
             magnet.target, magnetic.target, magneticRectF).toViewRect(magneticRect)
-        val magnetRect = magnet.target.getViewRawRectF(magnetRectF).toViewRect(magnetRect)
+        val magnetRect = magnet.target.getViewRectF(magnetRectF).toViewRect(magnetRect)
         val distance = when (measureResult.alignment) {
             TopToTop -> magneticRect.top - magnetRect.top
             TopToVerticalCenter -> magneticRect.top - magnetRect.centerY()

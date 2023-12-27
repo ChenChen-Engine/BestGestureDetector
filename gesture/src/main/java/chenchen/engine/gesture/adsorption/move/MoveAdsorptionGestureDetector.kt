@@ -11,9 +11,9 @@ import chenchen.engine.gesture.ConstraintAlignment.*
 import chenchen.engine.gesture.ConstrainedAlignment.*
 import chenchen.engine.gesture.MoveGestureDetector
 import chenchen.engine.gesture.MoveMovementTrack
-import chenchen.engine.gesture.getViewRawRectF
 import chenchen.engine.gesture.nullIf
 import chenchen.engine.gesture.coordinateMapToCoordinate
+import chenchen.engine.gesture.getViewRectF
 import chenchen.engine.gesture.toViewRect
 import kotlin.math.abs
 import kotlin.math.max
@@ -161,7 +161,7 @@ class MoveAdsorptionGestureDetector(
         val verticalCenterAnalyzes = arrayListOf<MoveAnalyzeResult>()
         val bottomAnalyzes = arrayListOf<MoveAnalyzeResult>()
         //1.2 获取磁性物体的绝对坐标
-        val magneticRectF = magnetic.target.getViewRawRectF(adsorption.magneticRectF)
+        val magneticRectF = magnetic.target.getViewRectF(adsorption.magneticRectF)
         for (magnet in magnets) {
             if (!magnet.target.isAttachedToWindow) {
                 //如果磁铁已经被移除则跳过
@@ -176,7 +176,7 @@ class MoveAdsorptionGestureDetector(
             //步骤1.3 获取每个磁铁的绝对坐标
             val magneticRect = coordinateMapToCoordinate(magnet.target,
                 magnetic.target, magneticRectF).toViewRect(adsorption.magneticRect)
-            val magnetRect = magnet.target.getViewRawRectF(
+            val magnetRect = magnet.target.getViewRectF(
                 adsorption.magnetRectF).toViewRect(adsorption.magnetRect)
             for (alignment in magnetic.alignments) {
                 //步骤1.4.1 测量水平方向Left、HorizontalCenter、Right三个点的吸附距离，三个点都要记录，最终取最三个点最接近的一个点作为吸附动画的x轴值
@@ -722,7 +722,7 @@ class MoveAdsorptionGestureDetector(
         var minValue: Int? = null
         for (result in this) {
             tempRectF.set(0f, 0f, result.distance.toFloat(), 0f)
-            coordinateMapToCoordinate(magnetic, result.magnet.target, tempRectF).toViewRect(tempRect)
+            coordinateMapToCoordinate(result.magnet.target, magnetic,  tempRectF).toViewRect(tempRect)
             //矩阵变换后无法得知原始的值是正的还是负的，需要多一步判断原始值
             val value = if (result.distance > 0) {
                 tempRect.width()
