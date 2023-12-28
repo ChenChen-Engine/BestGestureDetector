@@ -215,9 +215,10 @@ internal data class BestGestureState(
 
     companion object {
         /**
-         * 默认滑动阈值，不做限制，但[GestureDetectorCompat]做了限制，随便定义一个大于
+         * 默认滑动阈值，我不想做限制，但[GestureDetectorCompat]做了限制，
+         * 所以定义一个大于0小于[ViewConfiguration.getScaledTouchSlop] * 2的最大安全值
          */
-        const val defaultCancelClickScrollThreshold = Float.MAX_VALUE
+        const val defaultCancelClickScrollThreshold = 10f
     }
 
     /**
@@ -659,7 +660,7 @@ internal data class BestGestureState(
      * @param threshold 设置的值大于[ViewConfiguration.getScaledTouchSlop] * 2无效
      */
     fun setupCancelClickScrollThreshold(threshold: Float) {
-        cancelClickScrollThreshold = threshold
+        cancelClickScrollThreshold = max(min(threshold, defaultCancelClickScrollThreshold), 0f)
     }
 
     /**

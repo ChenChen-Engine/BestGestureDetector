@@ -244,7 +244,7 @@ class BestGestureDetector private constructor(
         }
         if (state.isInSingleFingerProgress && touchListener != null) {
             when {
-                //按压后有滑动过，结束事件 fixme 这段逻辑似乎不应该写在这里
+                //按压后有滑动过，结束事件 fixme 当能解决GestureDetectorCompat的滑动阈值问题，就不需要这段代码
                 state.isInSingleTapScrollProgress ||
                         //长按过，结束事件
                         state.isInLongPressProgress ||
@@ -370,14 +370,11 @@ class BestGestureDetector private constructor(
      * 其他正常手机和原生逻辑都只是发送DOWN,UP，为兼容垃圾系统的异常情况，做一些处理
      */
     private fun isOutsideCancelClickScrolledThreshold(): Boolean {
-        if (state.cancelClickScrollThreshold == defaultCancelClickScrollThreshold) {
-            return false
-        }
         return when {
             abs((startEvent?.x ?: 0f)) - abs((currentEvent?.x ?: 0f))
-                    > state.cancelClickScrollThreshold -> true
+                    >= state.cancelClickScrollThreshold -> true
             abs((startEvent?.y ?: 0f)) - abs((currentEvent?.y ?: 0f))
-                    > state.cancelClickScrollThreshold -> true
+                    >= state.cancelClickScrollThreshold -> true
             else -> false
         }
     }
