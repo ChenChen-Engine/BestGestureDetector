@@ -138,7 +138,7 @@ class BestGestureDetector private constructor(
                 state.recycleState()
             }
         }
-        state.useSingleFinger(isHandle)
+        state.rememberUseSingleFinger(isHandle)
         return isHandle
     }
 
@@ -167,7 +167,7 @@ class BestGestureDetector private constructor(
                 isHandle = isHandle or state.isInMoveProgress
             }
         }
-        state.useMultiFinger(isHandle)
+        state.rememberUseMultiFinger(isHandle)
         state.isTriggerDoubleClick = false
         state.isUsedMultiFinger = true
         onAndroidGesture.onTouchEvent(event.event)
@@ -229,7 +229,7 @@ class BestGestureDetector private constructor(
             isHandle = true
         }
         if (event.pointerCount <= 2) {
-            state.useMultiFinger(false)
+            state.rememberUseMultiFinger(false)
         }
         return isHandle
     }
@@ -912,7 +912,7 @@ class BestGestureDetector private constructor(
      * @param value 累积移动x轴的值，必须是大于0的正值，无论是左滑还是右滑只要超过这个值才会回调
      */
     fun accumulateMoveX(value: Float) {
-        state.accumulateMoveX(value)
+        state.setupAccumulateMoveX(value)
     }
 
     /**
@@ -922,7 +922,7 @@ class BestGestureDetector private constructor(
      * @param value 累积移动y轴的值，必须是大于0的正值，无论是上滑还是下滑，只要超过这个值才会回调
      */
     fun accumulateMoveY(value: Float) {
-        state.accumulateMoveY(value)
+        state.setupAccumulateMoveY(value)
     }
 
     /**
@@ -932,7 +932,7 @@ class BestGestureDetector private constructor(
      * @param value 累积旋转的值，必须是大于0的正值，无论是左旋转还是右旋转，只要超过这个值才会回调
      */
     fun accumulateRotation(value: Float) {
-        state.accumulateRotation(value)
+        state.setupAccumulateRotation(value)
     }
 
     /**
@@ -942,7 +942,7 @@ class BestGestureDetector private constructor(
      * @param value 累积缩放的值，必须是大于0的正值，无论是放大还是缩小，只要超过这个值才会回调
      */
     fun accumulateScale(value: Float) {
-        state.accumulateScale(value)
+        state.setupAccumulateScale(value)
     }
 
     /**
@@ -954,59 +954,101 @@ class BestGestureDetector private constructor(
     }
 
     /**
+     * false 关闭双击，关闭双击后单击的响应会快一点，true 开启双击，开启双击后需要等待双击响应时间超时，单击响应就会慢一点
+     */
+    fun setEnableDoubleClick(isEnable: Boolean) {
+        state.setupEnableDoubleClick(isEnable)
+    }
+
+    /**
+     * 是否开启双击
+     */
+    fun isEnableDoubleClick(): Boolean {
+        return state.isEnableDoubleClick
+    }
+
+    /**
+     * 是否处于点击后滑动，就放弃点击事件
+     */
+    fun setEnableScrollCancelClick(isEnable: Boolean) {
+        state.setupEnableScrollCancelClick(isEnable)
+    }
+
+    /**
+     * 是否启用点击后滑动，就放弃点击事件
+     */
+    fun isEnableScrollCancelClick(): Boolean {
+        return state.isInSingleTapScrollingGiveUpClick
+    }
+
+    /**
+     * 是否启用两次按压（双击）后滑动，就放弃点击事件
+     */
+    fun setEnableScrollCancelDoubleClick(isEnable: Boolean) {
+        state.setupEnableScrollCancelDoubleClick(isEnable)
+    }
+
+    /**
+     * 是否启用双击后滑动，就放弃双击事件
+     */
+    fun isEnableScrollCancelDoubleClick(): Boolean {
+        return state.isInSingleTapScrollingGiveUpClick
+    }
+
+    /**
      * 设置开始事件的绝对位置
      */
     fun setStartEventLocation(x: Float, y: Float) {
-        state.setStartEventLocation(x, y)
+        state.setupStartEventLocation(x, y)
     }
 
     /**
      * 设置当前事件的绝对位置
      */
     fun setCurrentEventLocation(x: Float, y: Float) {
-        state.setCurrentEventLocation(x, y)
+        state.setupCurrentEventLocation(x, y)
     }
 
     /**
      * 设置上一个事件的绝对位置
      */
     fun setPreviousEventLocation(x: Float, y: Float) {
-        state.setPreviousEventLocation(x, y)
+        state.setupPreviousEventLocation(x, y)
     }
 
     /**
      * 设置所有事件的绝对位置
      */
     fun setAllEventLocation(x: Float, y: Float) {
-        state.setAllEventLocation(x, y)
+        state.setupAllEventLocation(x, y)
     }
 
     /**
      * 给开始事件设置偏移量
      */
     fun setStartEventOffsetLocation(x: Float, y: Float) {
-        state.setStartEventOffsetLocation(x, y)
+        state.setupStartEventOffsetLocation(x, y)
     }
 
     /**
      * 给当前事件设置偏移量
      */
     fun setCurrentEventOffsetLocation(x: Float, y: Float) {
-        state.setCurrentEventOffsetLocation(x, y)
+        state.setupCurrentEventOffsetLocation(x, y)
     }
 
     /**
      * 给上一个事件设置偏移量
      */
     fun setPreviousEventOffsetLocation(x: Float, y: Float) {
-        state.setPreviousEventOffsetLocation(x, y)
+        state.setupPreviousEventOffsetLocation(x, y)
     }
 
     /**
      * 给所有事件设置偏移量
      */
     fun setAllEventOffsetLocation(x: Float, y: Float) {
-        state.setAllEventOffsetLocation(x, y)
+        state.setupAllEventOffsetLocation(x, y)
     }
 
     /**
@@ -1064,33 +1106,6 @@ class BestGestureDetector private constructor(
     fun setMoveListener(listener: OnMoveGestureListener) {
         this.moveListener = listener
     }
-
-    /**
-     * false 关闭双击，关闭双击后单击的响应会快一点，true 开启双击，开启双击后需要等待双击响应时间超时，单击响应就会慢一点
-     */
-    var isEnableDoubleClick: Boolean
-        set(value) {
-            state.isEnableDoubleClick = value
-        }
-        get() = state.isEnableDoubleClick
-
-    /**
-     * 是否处于点击后滑动，就放弃点击事件
-     */
-    var isInSingleTapScrollingGiveUpClick: Boolean
-        set(value) {
-            state.isInSingleTapScrollingGiveUpClick = value
-        }
-        get() = state.isInSingleTapScrollingGiveUpClick
-
-    /**
-     *  是否处于两次按压（双击）后滑动，就放弃点击事件
-     */
-    var isInDoubleTapScrollingGiveUpClick: Boolean
-        set(value) {
-            state.isInDoubleTapScrollingGiveUpClick = value
-        }
-        get() = state.isInDoubleTapScrollingGiveUpClick
 
     /**
      * 复制一份新的，手势监听此时已经不存在了

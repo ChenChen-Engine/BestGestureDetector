@@ -18,6 +18,9 @@ import kotlin.math.min
  * 手势相关的状态
  * @author: chenchen
  * @since: 2023/4/14 11:03
+ * ## 命名规则
+ * rememberXxx：记录内部状态
+ * setupXxx：提供外部设置状态
  */
 internal data class BestGestureState(
     /**
@@ -272,7 +275,7 @@ internal data class BestGestureState(
     /**
      * 使用单指手势
      */
-    fun useSingleFinger(isHandle: Boolean) {
+    fun rememberUseSingleFinger(isHandle: Boolean) {
         isInSingleFingerProgress = isHandle
         if (isInSingleFingerProgress) {
             isInMultiFingerProgress = !isInSingleFingerProgress
@@ -282,7 +285,7 @@ internal data class BestGestureState(
     /**
      * 使用双指手势
      */
-    fun useMultiFinger(isHandle: Boolean) {
+    fun rememberUseMultiFinger(isHandle: Boolean) {
         isInMultiFingerProgress = isHandle
         isInSingleFingerProgress = !isInMultiFingerProgress
     }
@@ -358,7 +361,7 @@ internal data class BestGestureState(
     /**
      * 设置累积移动值
      */
-    fun accumulateMoveX(value: Float) {
+    fun setupAccumulateMoveX(value: Float) {
         require(value > 0) { "设置BestGestureDetector.accumulateMoveX()的值必须大于0, value:${value}" }
         accumulateMoveX = value
         rememberAccumulateMoveX = 0f
@@ -367,7 +370,7 @@ internal data class BestGestureState(
     /**
      * 设置累积移动值
      */
-    fun accumulateMoveY(value: Float) {
+    fun setupAccumulateMoveY(value: Float) {
         require(value > 0) { "设置BestGestureDetector.accumulateMoveY()的值必须大于0, value:${value}" }
         accumulateMoveY = value
         rememberAccumulateMoveY = 0f
@@ -376,7 +379,7 @@ internal data class BestGestureState(
     /**
      * 设置累积旋转值
      */
-    fun accumulateRotation(value: Float) {
+    fun setupAccumulateRotation(value: Float) {
         require(value > 0) { "设置BestGestureDetector.accumulateRotation()的值必须大于0, value:${value}" }
         accumulateRotation = value
         rememberAccumulateRotation = 0f
@@ -385,7 +388,7 @@ internal data class BestGestureState(
     /**
      * 记录累积缩放值
      */
-    fun accumulateScale(value: Float) {
+    fun setupAccumulateScale(value: Float) {
         require(value > 0) { "设置BestGestureDetector.accumulateScale()的值必须大于0, value:${value}" }
         accumulateScale = value
         rememberAccumulateScale = 0f
@@ -660,63 +663,84 @@ internal data class BestGestureState(
     }
 
     /**
+     * false 关闭双击，关闭双击后单击的响应会快一点，true 开启双击，开启双击后需要等待双击响应时间超时，单击响应就会慢一点
+     */
+    fun setupEnableDoubleClick(isEnable: Boolean) {
+        isEnableDoubleClick = isEnable
+    }
+
+    /**
+     * 是否处于点击后滑动，就放弃点击事件
+     */
+    fun setupEnableScrollCancelClick(isEnable: Boolean) {
+        isInSingleTapScrollingGiveUpClick = isEnable
+    }
+
+    /**
+     * 是否启用两次按压（双击）后滑动，就放弃点击事件
+     */
+    fun setupEnableScrollCancelDoubleClick(isEnable: Boolean) {
+        isInDoubleTapScrollingGiveUpClick = isEnable
+    }
+
+    /**
      * 给开始事件设置偏移量
      */
-    fun setStartEventOffsetLocation(x: Float, y: Float) {
+    fun setupStartEventOffsetLocation(x: Float, y: Float) {
         startEvent?.offsetLocation(x, y)
     }
 
     /**
      * 设置开始事件的绝对位置
      */
-    fun setStartEventLocation(x: Float, y: Float) {
+    fun setupStartEventLocation(x: Float, y: Float) {
         startEvent?.setLocation(x, y)
     }
 
     /**
      * 设置当前事件的绝对位置
      */
-    fun setCurrentEventLocation(x: Float, y: Float) {
+    fun setupCurrentEventLocation(x: Float, y: Float) {
         currentEvent?.setLocation(x, y)
     }
 
     /**
      * 设置上一个事件的绝对位置
      */
-    fun setPreviousEventLocation(x: Float, y: Float) {
+    fun setupPreviousEventLocation(x: Float, y: Float) {
         previousEvent?.setLocation(x, y)
     }
 
     /**
      * 设置所有事件的绝对位置
      */
-    fun setAllEventLocation(x: Float, y: Float) {
-        setStartEventLocation(x, y)
-        setCurrentEventLocation(x, y)
-        setPreviousEventLocation(x, y)
+    fun setupAllEventLocation(x: Float, y: Float) {
+        setupStartEventLocation(x, y)
+        setupCurrentEventLocation(x, y)
+        setupPreviousEventLocation(x, y)
     }
 
     /**
      * 给当前事件设置偏移量
      */
-    fun setCurrentEventOffsetLocation(x: Float, y: Float) {
+    fun setupCurrentEventOffsetLocation(x: Float, y: Float) {
         currentEvent?.offsetLocation(x, y)
     }
 
     /**
      * 给上一个事件设置偏移量
      */
-    fun setPreviousEventOffsetLocation(x: Float, y: Float) {
+    fun setupPreviousEventOffsetLocation(x: Float, y: Float) {
         previousEvent?.offsetLocation(x, y)
     }
 
     /**
      * 给所有事件设置偏移量
      */
-    fun setAllEventOffsetLocation(x: Float, y: Float) {
-        setStartEventOffsetLocation(x, y)
-        setCurrentEventOffsetLocation(x, y)
-        setPreviousEventOffsetLocation(x, y)
+    fun setupAllEventOffsetLocation(x: Float, y: Float) {
+        setupStartEventOffsetLocation(x, y)
+        setupCurrentEventOffsetLocation(x, y)
+        setupPreviousEventOffsetLocation(x, y)
     }
 
     /**
