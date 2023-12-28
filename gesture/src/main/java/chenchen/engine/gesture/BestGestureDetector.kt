@@ -244,7 +244,7 @@ class BestGestureDetector private constructor(
         }
         if (state.isInSingleFingerProgress && touchListener != null) {
             when {
-                //按压后有滑动过，结束事件
+                //按压后有滑动过，结束事件 fixme 这段逻辑似乎不应该写在这里
                 state.isInSingleTapScrollProgress ||
                         //长按过，结束事件
                         state.isInLongPressProgress ||
