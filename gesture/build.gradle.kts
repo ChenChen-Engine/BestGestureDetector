@@ -2,6 +2,7 @@ plugins {
     id("com.android.library")
     id("kotlin-android")
     id("maven-publish")
+    id("org.jetbrains.dokka")
 }
 
 publishing {
@@ -50,4 +51,5 @@ android {
 dependencies {
     implementation("androidx.core:core-ktx:1.10.1")
     implementation("androidx.appcompat:appcompat:1.6.1")
+    dokkaPlugin("org.jetbrains.dokka:android-documentation-plugin:1.9.10")
 }
