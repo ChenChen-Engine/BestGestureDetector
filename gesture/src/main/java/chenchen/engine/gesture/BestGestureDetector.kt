@@ -9,7 +9,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import androidx.core.view.GestureDetectorCompat
-import chenchen.engine.gesture.BestGestureState.Companion.defaultCancelClickScrollThreshold
 import chenchen.engine.gesture.compat.MotionEventCompat
 import chenchen.engine.gesture.compat.MotionEventCompat.Companion.obtain
 import kotlin.math.abs
@@ -45,6 +44,8 @@ import kotlin.math.sqrt
  * [ ] 如果取moveX、moveY再转成Int，滑动越慢，越脱手
  * [ ] 双指距离小于等于10f的时候，会触发[MotionEvent.ACTION_POINTER_UP]接着又会重新触发[MotionEvent.ACTION_POINTER_DOWN]
  * [-] 双指手势需要使用到getRawXX才不会出现抖动问题，但是getRawXX需要api 29才能使用。可以通过修正坐标来解决
+ * [ ] 原始的[View.onTouchEvent]是可以在点击后滑动也能触发点击事件，而[GestureDetectorCompat]有阈值定义，不能滑动超出这个范围，阈值是有一定的，假设阈值设定为1，[View]放大10倍，在屏幕上滑动了9像素，实际在[View]上仅滑动了0.9像素，此时体验与预期是不相符的。唯一解决的办法就是重写[GestureDetectorCompat]
+ *
  * ```
  *
  * 使用方式：
@@ -371,10 +372,10 @@ class BestGestureDetector private constructor(
      */
     private fun isOutsideCancelClickScrolledThreshold(): Boolean {
         return when {
-            abs((startEvent?.x ?: 0f) - (currentEvent?.x ?: 0f))
-                    >= state.cancelClickScrollThreshold -> true
-            abs((startEvent?.y ?: 0f) - (currentEvent?.y ?: 0f))
-                    >= state.cancelClickScrollThreshold -> true
+            abs((startEvent?.x ?: 0f) - (currentEvent?.x ?: 0f)) >=
+                    state.cancelClickScrollThreshold -> true
+            abs((startEvent?.y ?: 0f) - (currentEvent?.y ?: 0f)) >=
+                    state.cancelClickScrollThreshold -> true
             else -> false
         }
     }

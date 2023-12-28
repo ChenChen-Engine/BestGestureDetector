@@ -216,9 +216,10 @@ internal data class BestGestureState(
     companion object {
         /**
          * 默认滑动阈值，我不想做限制，但[GestureDetectorCompat]做了限制，
-         * 所以定义一个大于0小于[ViewConfiguration.getScaledTouchSlop] * 2的最大安全值
+         * 目前不适合定义非0的值，假设定义了1，[View]放大了10倍，当我看起来已经滑动了9，实际上[View]才滑动了0.9
+         * 在解决[GestureDetectorCompat]的问题之前，这个值都是0
          */
-        const val defaultCancelClickScrollThreshold = 10f
+        const val defaultCancelClickScrollThreshold = 0f
     }
 
     /**
