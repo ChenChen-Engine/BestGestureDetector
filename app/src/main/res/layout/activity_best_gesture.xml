@@ -6,6 +6,7 @@
     android:layout_height="match_parent">
 
     <chenchen.engine.gesture.widget.GestureView
+        android:id="@+id/view"
         android:layout_width="200dp"
         android:layout_height="200dp"
         android:background="#972374" />
