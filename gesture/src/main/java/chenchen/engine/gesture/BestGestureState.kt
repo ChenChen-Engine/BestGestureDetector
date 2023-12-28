@@ -5,10 +5,11 @@ import android.graphics.PointF
 import android.os.Build
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
+import androidx.core.view.GestureDetectorCompat
 import chenchen.engine.gesture.compat.MotionEventCompat
 import chenchen.engine.gesture.compat.MotionEventCompat.Companion.compat
 import chenchen.engine.gesture.compat.MotionEventCompat.Companion.obtain
-import java.lang.NullPointerException
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -190,9 +191,31 @@ internal data class BestGestureState(
      * 记录缩放的值，每当值是[accumulateScale]倍数则消费一次，只在本次手势结束前有效，下次手势开始前将重置
      */
     var rememberAccumulateScale: Float = 0f,
+
+    /**
+     * 当按压后滑动([MotionEvent.ACTION_MOVE])超过这个阈值就不触发点击事件，对单击、双击都有效
+     * 最大范围指的是[View]的大小，[cancelClickScrollThreshold]需要小于等于[View]的大小，当触摸超出[View]的范围，即使满足
+     * 这个阈值，也不会触发点击，此时大概率会被[MotionEvent.ACTION_CANCEL]
+     * #
+     * PS: 设置的值大于[ViewConfiguration.getScaledTouchSlop] * 2无效
+     * #
+     * PS: 这是未来理想的功能，但目前无法实现，因为采用了原生[GestureDetectorCompat]，在点击行为上和[View]原始的行为不一致
+     * [View]可以DOWN后任意MOVE，最后UP时也算点击事件，而[GestureDetectorCompat]在DOWN后MOVE超出阈值，就无法响应点击
+     * 并且这个阈值无法修改，不能实现自定义阈值，未来可能会通过一些手段支持。
+     * #
+     * PS: 如果[View]在跟着手势移动，这个值没有参考意义，因为x/y不会变，不会认为在滑动
+     */
+    var cancelClickScrollThreshold: Float = defaultCancelClickScrollThreshold,
 ) {
 
     private val TAG = "BestGestureState"
+
+    companion object {
+        /**
+         * 默认滑动阈值，不做限制，但[GestureDetectorCompat]做了限制，随便定义一个大于
+         */
+        const val defaultCancelClickScrollThreshold = Float.MAX_VALUE
+    }
 
     /**
      * 记录当前Event
@@ -629,6 +652,21 @@ internal data class BestGestureState(
     }
 
     /**
+     * 设置滑动阈值，大于这个阈值则取消点击事件，
+     * @param threshold 设置的值大于[ViewConfiguration.getScaledTouchSlop] * 2无效
+     */
+    fun setupCancelClickScrollThreshold(threshold: Float) {
+        cancelClickScrollThreshold = threshold
+    }
+
+    /**
+     * 给开始事件设置偏移量
+     */
+    fun setStartEventOffsetLocation(x: Float, y: Float) {
+        startEvent?.offsetLocation(x, y)
+    }
+
+    /**
      * 设置开始事件的绝对位置
      */
     fun setStartEventLocation(x: Float, y: Float) {
@@ -652,17 +690,10 @@ internal data class BestGestureState(
     /**
      * 设置所有事件的绝对位置
      */
-    fun setAllEventLocation(x: Float, y: Float){
-        setStartEventLocation(x,y)
-        setCurrentEventLocation(x,y)
-        setPreviousEventLocation(x,y)
-    }
-
-    /**
-     * 给开始事件设置偏移量
-     */
-    fun setStartEventOffsetLocation(x: Float, y: Float) {
-        startEvent?.offsetLocation(x, y)
+    fun setAllEventLocation(x: Float, y: Float) {
+        setStartEventLocation(x, y)
+        setCurrentEventLocation(x, y)
+        setPreviousEventLocation(x, y)
     }
 
     /**
