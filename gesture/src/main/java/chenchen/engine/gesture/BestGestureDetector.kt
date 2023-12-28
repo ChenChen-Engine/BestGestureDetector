@@ -371,9 +371,9 @@ class BestGestureDetector private constructor(
      */
     private fun isOutsideCancelClickScrolledThreshold(): Boolean {
         return when {
-            abs((startEvent?.x ?: 0f)) - abs((currentEvent?.x ?: 0f))
+            abs((startEvent?.x ?: 0f) - (currentEvent?.x ?: 0f))
                     >= state.cancelClickScrollThreshold -> true
-            abs((startEvent?.y ?: 0f)) - abs((currentEvent?.y ?: 0f))
+            abs((startEvent?.y ?: 0f) - (currentEvent?.y ?: 0f))
                     >= state.cancelClickScrollThreshold -> true
             else -> false
         }
