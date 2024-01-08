@@ -224,20 +224,12 @@ internal data class BestGestureState(
 
     /**
      * 记录当前Event
-     * 兼容Android10以下[MotionEvent.getRawX]会因为[android.view.ViewGroup]分发的过程中被转换过的问题
-     * [MotionEvent.getRawX]应该是屏幕的绝对坐标，不受任何变化影象。
-     * 导致的现象则是会出现坐标抖动
      */
     open fun rememberCurrentEvent(view: View, event: MotionEvent) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            if (!view.matrix.isIdentity) {
-                event.transform(view.matrix)
-            }
-        }
         if (currentEvent != null) {
             currentEvent?.recycle()
         }
-        currentEvent = event.compat()
+        currentEvent = event.compat(view)
     }
 
     /**

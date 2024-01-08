@@ -4,15 +4,18 @@ import android.annotation.SuppressLint
 import android.graphics.Matrix
 import android.os.Build
 import android.view.MotionEvent
+import android.view.View
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 
 /**
- * [MotionEvent]兼容类，目的为了解决低版本无法使用`MotionEvent.getRawX(pointerIndex)`
+ * [MotionEvent]兼容类，目的：
+ * 1. 为了解决低版本无法使用[MotionEvent.getRawX]
+ * 2. 修复Android11.0及以下在[View]内部以任何方式获取[MotionEvent.getRawX]都会抖动
  * @author: chenchen
  * @since: 2023/4/14 10:30
  */
-class MotionEventCompat(val event: MotionEvent) {
+class MotionEventCompat(val event: MotionEvent, val fixRawEvent: MotionEvent?) {
 
     companion object {
 
@@ -55,12 +58,27 @@ class MotionEventCompat(val event: MotionEvent) {
             throw RuntimeException("nativeGetRawAxisValue method not found.")
         }
 
-        fun MotionEvent.compat(): MotionEventCompat {
-            return MotionEventCompat(MotionEvent.obtain(this))
+        fun MotionEvent.compat(view: View? = null): MotionEventCompat {
+            //530行 https://cs.android.com/android/platform/superproject/+/android-11.0.0_r1:frameworks/native/libs/input/Input.cpp
+            //修复Android11.0调用MotionEvent.transform会对rawX，rawY进行变换，但rawX，rawY应该是分发到Window之后就不会再变化的
+            //这个代码原本是针对11.0，但10.0及以下源码没对rawX，rawY进行变换(我没找到)，rawX，rawY的值也不正常
+            //所以这段代码可以修复11.0及以下rawX，rawY值不正常的情况
+            //但因无法预估未来的版本(12.0,13.0正常)会做出什么改动，这里不做版本区分，统一进行修复，这个改动百分百正确
+            val fixRawEvent = MotionEvent.obtain(this)
+            if (view?.matrix?.isIdentity == false) {
+                fixRawEvent.transform(view.matrix)
+            }
+            return MotionEventCompat(
+                MotionEvent.obtain(this),
+                fixRawEvent?.let { MotionEvent.obtain(it) }
+            )
         }
 
         fun MotionEventCompat.obtain(): MotionEventCompat {
-            return MotionEventCompat(MotionEvent.obtain(this.event))
+            return MotionEventCompat(
+                MotionEvent.obtain(this.event),
+                this.fixRawEvent?.let { MotionEvent.obtain(it) }
+            )
         }
     }
 
@@ -109,10 +127,10 @@ class MotionEventCompat(val event: MotionEvent) {
     fun getRawX(pointerIndex: Int): Float {
         return try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                event.getRawX(pointerIndex)
+                fixRawEvent!!.getRawX(pointerIndex)
             } else {
                 getRawAxisValueMethod.invoke(
-                    null, nativePtrField.get(event),
+                    null, nativePtrField.get(fixRawEvent),
                     MotionEvent.AXIS_X, pointerIndex,
                     historyCurrentField.get(null)
                 ) as Float
@@ -125,10 +143,10 @@ class MotionEventCompat(val event: MotionEvent) {
     fun getRawY(pointerIndex: Int): Float {
         return try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                event.getRawY(pointerIndex)
+                fixRawEvent!!.getRawY(pointerIndex)
             } else {
                 getRawAxisValueMethod.invoke(
-                    null, nativePtrField.get(event),
+                    null, nativePtrField.get(fixRawEvent),
                     MotionEvent.AXIS_Y, pointerIndex,
                     historyCurrentField.get(null)
                 ) as Float
@@ -152,6 +170,7 @@ class MotionEventCompat(val event: MotionEvent) {
 
     fun recycle() {
         event.recycle()
+        fixRawEvent?.recycle()
     }
 
     /**
@@ -171,10 +190,10 @@ class MotionEventCompat(val event: MotionEvent) {
         if (event.buttonState != other.event.buttonState) return false
         if (event.metaState != other.event.metaState) return false
         if (event.pointerCount != other.event.pointerCount) return false
-        if (event.rawX != other.event.rawX) return false
-        if (event.rawY != other.event.rawY) return false
         if (event.x != other.event.x) return false
         if (event.y != other.event.y) return false
+        if (fixRawEvent?.rawX != other.fixRawEvent?.rawX) return false
+        if (fixRawEvent?.rawY != other.fixRawEvent?.rawY) return false
         return true
     }
 }
