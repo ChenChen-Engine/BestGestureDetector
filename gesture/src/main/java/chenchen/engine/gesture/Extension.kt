@@ -8,6 +8,7 @@ import android.graphics.RectF
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewParent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
@@ -227,26 +228,14 @@ fun View.doChildReverseTransformParentEvent(event: MotionEvent): MotionEvent {
 }
 
 /**
- * 将rect从[source]的坐标系映射到[target]坐标系
+ * 将[RectF]从[source]的坐标系映射到[target]坐标系
  * @param source 需要转换的[View]，确保left,top,right,bottom是正确的
  * @param target 将要转换到这个[View]所在的坐标系，确保left,top,right,bottom是正确的
  * @param rectF 需要映射的矩形，如果是随意提供的矩形，不需要在意特殊情况，如果是从[View]获取的，请参考这些方法：
  * [getViewRectF]、[getViewScaleRectF]、[getViewRawRectF]
- * #
- * PS: 这里的命名的含义有点怪，原本我的意思是想将[source]所在的坐标系的坐标转换到[target]的坐标系，但实践后发现
- * 原本想传给[source]的控件传给[target]，原本传给[target]的控件传给[source]反而能得到我预期的数据，比如：
- * 我打算将`A`容器的`a1`控件的坐标转换到`B`容器的`Bb`容器的坐标里，按原本的设计是
- * ```
- * coordinateMapToCoordinate(a1, Bb, rectF)
- * ```
- * 但这样计算的数据反而不符合我的预期，而
- * ```
- * coordinateMapToCoordinate(Bb, a1, rectF)
- * ```
- * 可以得到我预期的数据
- * #
- * ## 从代码流程上看，先逆转到公共坐标系，再转换到目标坐标系，写法是没错的，所以并不打算修改命名，调用时注意下
- * ## 先尝试`coordinateMapToCoordinate(Bb, a1, rectF)`的用法，不行再换过来
+ *
+ * PS：这里需要注意坐标系是否正确，[source]是从自身坐标系到达[target]自身的坐标系，
+ * 而不是[source]所在的坐标系到达[target]所在的坐标系
  */
 fun coordinateMapToCoordinate(source: View, target: View, rectF: RectF): RectF {
     if (source == target) {
@@ -276,16 +265,80 @@ fun coordinateMapToCoordinate(source: View, target: View, rectF: RectF): RectF {
         sourceParent = sourceParent.parent as? ViewGroup
     }
 
-    source.doChildReverseTransformParentRectF(rectF)
+    source.doSelfReverseTransformRectF(rectF)
     for (parent in sourceParents) {
-        parent.doChildReverseTransformParentRectF(rectF)
+        parent.doSelfReverseTransformRectF(rectF)
     }
     for (parent in targetParents) {
-        parent.doParentTransformChildRectF(rectF)
+        parent.doSelfTransformRectF(rectF)
     }
-    target.doParentTransformChildRectF(rectF)
-    return source.doSelfReverseTransformRectF(rectF)
+    return target.doSelfTransformRectF(rectF)
 }
+
+/**
+ * 获取[View]绝对位置
+ * @param coordinate 参考坐标系，每一层[ViewGroup]都是一个坐标系，取决于你想获取相对在哪个[ViewGroup]的绝对位置
+ * 例如，想获取在[Activity]中的绝对位置，那么[coordinate]的实参就是`ContentView`
+ *
+ * [coordinate]一般都是传自己的父容器或父容器的父容器，为了通用性更广，可以传入非同一坐标系的[ViewGroup]或[View]
+ * 如果是非同一坐标系的[ViewGroup]或[View]则会去查找到共同的[ViewGroup]作为参考坐标系
+ *
+ * PS：不建议[coordinate]传入[View]的子[View]，预估不了这样的需求，可能会出现计算错误
+ *
+ * @param location 可以提供一个坐标去计算，如果不提供则获取[View]的坐标，并且是经过缩放、旋转后的坐标
+ */
+fun View.getAbsoluteLocation(coordinate: View = this.parent as View, location: RectF = RectF()): RectF {
+    if (location.isEmpty) {
+        getViewRectF(location)
+    }
+    if (this == coordinate) {
+        return location
+    }
+    val viewParents = getCommonParent(coordinate)
+    viewParents.removeLastOrNull()
+    for (parent in viewParents) {
+        parent.doSelfTransformRectF(location)
+    }
+    return location
+}
+
+/**
+ * 获取与[target]公共的父级[ViewGroup]
+ * @param target
+ * @return 返回所有[ViewParent]，集合中最后一个元素就是公共的父级
+ */
+fun View.getCommonParent(target: View): ArrayList<ViewGroup> {
+    if (this == target || this.parent == target.parent) {
+        return if (this.parent is ViewGroup) {
+            arrayListOf(this.parent as ViewGroup)
+        } else {
+            arrayListOf()
+        }
+    }
+    //查找最小公倍父类
+    val viewParents = arrayListOf<ViewGroup>()
+    val targetParents = arrayListOf<ViewGroup>()
+    var viewParent = this.parent as? ViewGroup
+    var targetParent = target.parent as? ViewGroup
+    outer@ while (targetParent != null) {
+        targetParents.add(targetParent)
+        while (viewParent != null) {
+            if (viewParent != this) {
+                viewParents.add(viewParent)
+            }
+            if (viewParent === targetParent) {
+                // 找到共同父容器
+                break@outer
+            }
+            viewParent = viewParent.parent as? ViewGroup
+        }
+        viewParents.clear()
+        viewParent = this.parent as? ViewGroup
+        targetParent = targetParent.parent as? ViewGroup
+    }
+    return viewParents
+}
+
 
 /**
  * 将[RectF]从[ViewGroup]坐标体系逆转成子[View]的坐标系
@@ -350,12 +403,6 @@ fun View.doSelfReverseTransformRectF(rectF: RectF): RectF {
 fun View?.getViewRawRectF(rectF: RectF = RectF()): RectF {
     this ?: return rectF
     rectF.set(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat())
-    if (!matrix.isIdentity) {
-        val cacheMatrix = matrix
-        cacheMatrix.reset()
-        cacheMatrix.postScale(abs(scaleX), abs(scaleY), left + pivotX, top + pivotY)
-        cacheMatrix.mapRect(rectF)
-    }
     return rectF
 }
 

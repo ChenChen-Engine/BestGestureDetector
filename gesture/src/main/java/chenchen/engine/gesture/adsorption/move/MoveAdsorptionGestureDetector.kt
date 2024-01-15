@@ -19,6 +19,11 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import android.view.View
+import chenchen.engine.gesture.doSelfReverseTransformRectF
+import chenchen.engine.gesture.getAbsoluteLocation
+import chenchen.engine.gesture.getCommonParent
+import chenchen.engine.gesture.getViewRawRectF
+import kotlin.math.roundToInt
 
 /**
  * @author: chenchen
@@ -163,8 +168,6 @@ class MoveAdsorptionGestureDetector(
         val topAnalyzes = arrayListOf<MoveAnalyzeResult>()
         val verticalCenterAnalyzes = arrayListOf<MoveAnalyzeResult>()
         val bottomAnalyzes = arrayListOf<MoveAnalyzeResult>()
-        //1.2 获取磁性物体的绝对坐标
-        val magneticRectF = magnetic.target.getViewRectF(adsorption.magneticRectF)
         for (magnet in magnets) {
             if (!magnet.target.isAttachedToWindow) {
                 //如果磁铁已经被移除则跳过
@@ -176,11 +179,16 @@ class MoveAdsorptionGestureDetector(
             topAnalyze = null
             verticalAnalyze = null
             bottomAnalyze = null
-            //步骤1.3 获取每个磁铁的绝对坐标
-            val magneticRect = coordinateMapToCoordinate(magnet.target,
-                magnetic.target, magneticRectF).toViewRect(adsorption.magneticRect)
-            val magnetRect = magnet.target.getViewRectF(
-                adsorption.magnetRectF).toViewRect(adsorption.magnetRect)
+            //1.2 获取磁性物体的绝对坐标
+            magnetic.target.getViewRectF(adsorption.magneticRectF)
+            val magneticRect = magnetic.target.getAbsoluteLocation(
+                magnet.target, adsorption.magneticRectF
+            ).toViewRect(adsorption.magneticRect)
+            //步骤1.3 获取磁铁的绝对坐标
+            magnet.target.getViewRectF(adsorption.magnetRectF)
+            val magnetRect = magnet.target.getAbsoluteLocation(
+                magnetic.target, adsorption.magnetRectF
+            ).toViewRect(adsorption.magnetRect)
             for (alignment in magnetic.alignments) {
                 //步骤1.4.1 测量水平方向Left、HorizontalCenter、Right三个点的吸附距离，三个点都要记录，最终取最三个点最接近的一个点作为吸附动画的x轴值
                 val horizontalAnalyzeFunc = horizontalAnalyze@{
@@ -327,9 +335,9 @@ class MoveAdsorptionGestureDetector(
                     //根据手势去吸附，如果Left->Right手势，那么肯定不能出现Right->Left的吸附，其他同理
                     when (state.hMovementTrack) {
                         MoveMovementTrack.RightToLeft ->
-                            min((0 - magneticRect.left), 0).nullIf(0)
+                            min((magnetRect.left - magneticRect.left), 0).nullIf(0)
                         MoveMovementTrack.LeftToRight ->
-                            max((0 - magneticRect.left), 0).nullIf(0)
+                            max((magnetRect.left - magneticRect.left), 0).nullIf(0)
                         else -> null
                     }
                 }
@@ -337,9 +345,9 @@ class MoveAdsorptionGestureDetector(
                     align = HorizontalCenterToLeft
                     when (state.hMovementTrack) {
                         MoveMovementTrack.RightToLeft ->
-                            min((0 - magneticRect.centerX()), 0).nullIf(0)
+                            min((magnetRect.left - magneticRect.centerX()), 0).nullIf(0)
                         MoveMovementTrack.LeftToRight ->
-                            max((0 - magneticRect.centerX()), 0).nullIf(0)
+                            max((magnetRect.left - magneticRect.centerX()), 0).nullIf(0)
                         else -> null
                     }
                 }
@@ -347,9 +355,9 @@ class MoveAdsorptionGestureDetector(
                     align = RightToLeft
                     when (state.hMovementTrack) {
                         MoveMovementTrack.RightToLeft ->
-                            min((0 - magneticRect.right), 0).nullIf(0)
+                            min((magnetRect.left - magneticRect.right), 0).nullIf(0)
                         MoveMovementTrack.LeftToRight ->
-                            max((0 - magneticRect.right), 0).nullIf(0)
+                            max((magnetRect.left - magneticRect.right), 0).nullIf(0)
                         else -> null
                     }
                 }
@@ -386,9 +394,9 @@ class MoveAdsorptionGestureDetector(
                     align = LeftToHorizontalCenter
                     when (state.hMovementTrack) {
                         MoveMovementTrack.RightToLeft ->
-                            min((magnetRect.width() / 2 - magneticRect.left), 0).nullIf(0)
+                            min((magnetRect.centerX() - magneticRect.left), 0).nullIf(0)
                         MoveMovementTrack.LeftToRight ->
-                            max((magnetRect.width() / 2 - magneticRect.left), 0).nullIf(0)
+                            max((magnetRect.centerX() - magneticRect.left), 0).nullIf(0)
                         else -> null
                     }
                 }
@@ -396,9 +404,9 @@ class MoveAdsorptionGestureDetector(
                     align = HorizontalCenterToHorizontalCenter
                     when (state.hMovementTrack) {
                         MoveMovementTrack.RightToLeft ->
-                            min((magnetRect.width() / 2 - magneticRect.centerX()), 0).nullIf(0)
+                            min((magnetRect.centerX() - magneticRect.centerX()), 0).nullIf(0)
                         MoveMovementTrack.LeftToRight ->
-                            max((magnetRect.width() / 2 - magneticRect.centerX()), 0).nullIf(0)
+                            max((magnetRect.centerX() - magneticRect.centerX()), 0).nullIf(0)
                         else -> null
                     }
                 }
@@ -406,9 +414,9 @@ class MoveAdsorptionGestureDetector(
                     align = RightToHorizontalCenter
                     when (state.hMovementTrack) {
                         MoveMovementTrack.RightToLeft ->
-                            min((magnetRect.width() / 2 - magneticRect.right), 0).nullIf(0)
+                            min((magnetRect.centerX() - magneticRect.right), 0).nullIf(0)
                         MoveMovementTrack.LeftToRight ->
-                            max((magnetRect.width() / 2 - magneticRect.right), 0).nullIf(0)
+                            max((magnetRect.centerX() - magneticRect.right), 0).nullIf(0)
                         else -> null
                     }
                 }
@@ -445,9 +453,9 @@ class MoveAdsorptionGestureDetector(
                     align = LeftToRight
                     when (state.hMovementTrack) {
                         MoveMovementTrack.RightToLeft ->
-                            min((magnetRect.width() - magneticRect.left), 0).nullIf(0)
+                            min((magnetRect.right - magneticRect.left), 0).nullIf(0)
                         MoveMovementTrack.LeftToRight ->
-                            max((magnetRect.width() - magneticRect.left), 0).nullIf(0)
+                            max((magnetRect.right - magneticRect.left), 0).nullIf(0)
                         else -> null
                     }
                 }
@@ -455,9 +463,9 @@ class MoveAdsorptionGestureDetector(
                     align = HorizontalCenterToRight
                     when (state.hMovementTrack) {
                         MoveMovementTrack.RightToLeft ->
-                            min((magnetRect.width() - magneticRect.centerX()), 0).nullIf(0)
+                            min((magnetRect.right - magneticRect.centerX()), 0).nullIf(0)
                         MoveMovementTrack.LeftToRight ->
-                            max((magnetRect.width() - magneticRect.centerX()), 0).nullIf(0)
+                            max((magnetRect.right - magneticRect.centerX()), 0).nullIf(0)
                         else -> null
                     }
                 }
@@ -465,9 +473,9 @@ class MoveAdsorptionGestureDetector(
                     align = RightToRight
                     when (state.hMovementTrack) {
                         MoveMovementTrack.RightToLeft ->
-                            min((magnetRect.width() - magneticRect.right), 0).nullIf(0)
+                            min((magnetRect.right - magneticRect.right), 0).nullIf(0)
                         MoveMovementTrack.LeftToRight ->
-                            max((magnetRect.width() - magneticRect.right), 0).nullIf(0)
+                            max((magnetRect.right - magneticRect.right), 0).nullIf(0)
                         else -> null
                     }
                 }
@@ -504,9 +512,9 @@ class MoveAdsorptionGestureDetector(
                     align = TopToTop
                     when (state.vMovementTrack) {
                         MoveMovementTrack.BottomToTop ->
-                            min((0 - magneticRect.top), 0).nullIf(0)
+                            min((magnetRect.top - magneticRect.top), 0).nullIf(0)
                         MoveMovementTrack.TopToBottom ->
-                            max((0 - magneticRect.top), 0).nullIf(0)
+                            max((magnetRect.top - magneticRect.top), 0).nullIf(0)
                         else -> null
                     }
                 }
@@ -514,9 +522,9 @@ class MoveAdsorptionGestureDetector(
                     align = VerticalCenterToTop
                     when (state.vMovementTrack) {
                         MoveMovementTrack.BottomToTop ->
-                            min((0 - magneticRect.centerY()), 0).nullIf(0)
+                            min((magnetRect.top - magneticRect.centerY()), 0).nullIf(0)
                         MoveMovementTrack.TopToBottom ->
-                            max((0 - magneticRect.centerY()), 0).nullIf(0)
+                            max((magnetRect.top - magneticRect.centerY()), 0).nullIf(0)
                         else -> null
                     }
                 }
@@ -524,9 +532,9 @@ class MoveAdsorptionGestureDetector(
                     align = BottomToTop
                     when (state.vMovementTrack) {
                         MoveMovementTrack.BottomToTop ->
-                            min((0 - magneticRect.bottom), 0).nullIf(0)
+                            min((magnetRect.top - magneticRect.bottom), 0).nullIf(0)
                         MoveMovementTrack.TopToBottom ->
-                            max((0 - magneticRect.bottom), 0).nullIf(0)
+                            max((magnetRect.top - magneticRect.bottom), 0).nullIf(0)
                         else -> null
                     }
                 }
@@ -564,9 +572,9 @@ class MoveAdsorptionGestureDetector(
                     align = TopToVerticalCenter
                     when (state.vMovementTrack) {
                         MoveMovementTrack.BottomToTop ->
-                            min((magnetRect.height() / 2 - magneticRect.top), 0).nullIf(0)
+                            min((magnetRect.centerY() - magneticRect.top), 0).nullIf(0)
                         MoveMovementTrack.TopToBottom ->
-                            max((magnetRect.height() / 2 - magneticRect.top), 0).nullIf(0)
+                            max((magnetRect.centerY() - magneticRect.top), 0).nullIf(0)
                         else -> null
                     }
                 }
@@ -574,9 +582,9 @@ class MoveAdsorptionGestureDetector(
                     align = VerticalCenterToVerticalCenter
                     when (state.vMovementTrack) {
                         MoveMovementTrack.BottomToTop ->
-                            min((magnetRect.height() / 2 - magneticRect.centerY()), 0).nullIf(0)
+                            min((magnetRect.centerY() - magneticRect.centerY()), 0).nullIf(0)
                         MoveMovementTrack.TopToBottom ->
-                            max((magnetRect.height() / 2 - magneticRect.centerY()), 0).nullIf(0)
+                            max((magnetRect.centerY() - magneticRect.centerY()), 0).nullIf(0)
                         else -> null
                     }
                 }
@@ -584,9 +592,9 @@ class MoveAdsorptionGestureDetector(
                     align = BottomToVerticalCenter
                     when (state.vMovementTrack) {
                         MoveMovementTrack.BottomToTop ->
-                            min((magnetRect.height() / 2 - magneticRect.bottom), 0).nullIf(0)
+                            min((magnetRect.centerY() - magneticRect.bottom), 0).nullIf(0)
                         MoveMovementTrack.TopToBottom ->
-                            max((magnetRect.height() / 2 - magneticRect.bottom), 0).nullIf(0)
+                            max((magnetRect.centerY() - magneticRect.bottom), 0).nullIf(0)
                         else -> null
                     }
                 }
@@ -623,9 +631,9 @@ class MoveAdsorptionGestureDetector(
                     align = TopToBottom
                     when (state.vMovementTrack) {
                         MoveMovementTrack.BottomToTop ->
-                            min((magnetRect.height() - magneticRect.top), 0).nullIf(0)
+                            min((magnetRect.bottom - magneticRect.top), 0).nullIf(0)
                         MoveMovementTrack.TopToBottom ->
-                            max((magnetRect.height() - magneticRect.top), 0).nullIf(0)
+                            max((magnetRect.bottom - magneticRect.top), 0).nullIf(0)
                         else -> null
                     }
                 }
@@ -633,9 +641,9 @@ class MoveAdsorptionGestureDetector(
                     align = VerticalCenterToBottom
                     when (state.vMovementTrack) {
                         MoveMovementTrack.BottomToTop ->
-                            min((magnetRect.height() - magneticRect.centerY()), 0).nullIf(0)
+                            min((magnetRect.bottom - magneticRect.centerY()), 0).nullIf(0)
                         MoveMovementTrack.TopToBottom ->
-                            max((magnetRect.height() - magneticRect.centerY()), 0).nullIf(0)
+                            max((magnetRect.bottom - magneticRect.centerY()), 0).nullIf(0)
                         else -> null
                     }
                 }
@@ -643,9 +651,9 @@ class MoveAdsorptionGestureDetector(
                     align = BottomToBottom
                     when (state.vMovementTrack) {
                         MoveMovementTrack.BottomToTop ->
-                            min((magnetRect.height() - magneticRect.bottom), 0).nullIf(0)
+                            min((magnetRect.bottom - magneticRect.bottom), 0).nullIf(0)
                         MoveMovementTrack.TopToBottom ->
-                            max((magnetRect.height() - magneticRect.bottom), 0).nullIf(0)
+                            max((magnetRect.bottom - magneticRect.bottom), 0).nullIf(0)
                         else -> null
                     }
                 }
@@ -719,18 +727,24 @@ class MoveAdsorptionGestureDetector(
      * 计算出最小值，也就是最接近吸附点的距离
      */
     private fun ArrayList<MoveAnalyzeResult>.minDistanceOfOrNull(): Int? {
-        val tempRect = adsorption.matrixTempRect
         val tempRectF = adsorption.matrixTempRectF
         val magnetic = adsorption.magnetic.target
         var minValue: Int? = null
         for (result in this) {
-            tempRectF.set(0f, 0f, result.distance.toFloat(), 0f)
-            coordinateMapToCoordinate(result.magnet.target, magnetic,  tempRectF).toViewRect(tempRect)
+            tempRectF.set(0f, 0f, abs(result.distance.toFloat()), 0f)
+            //查询出公共的父级
+            val parents = magnetic.getCommonParent(result.magnet.target)
+            //但不需要公共的父级，只需要除了公共父级之外的父级就行
+            parents.removeLastOrNull()
+            //所有的父级对这个distance做变换，得到真正的distance
+            for (parent in parents) {
+                parent.doSelfReverseTransformRectF(tempRectF)
+            }
             //矩阵变换后无法得知原始的值是正的还是负的，需要多一步判断原始值
             val value = if (result.distance > 0) {
-                tempRect.width()
+                tempRectF.width().roundToInt()
             } else {
-                -tempRect.width()
+                -tempRectF.width().roundToInt()
             }
             minValue = if (minValue == null) {
                 value
