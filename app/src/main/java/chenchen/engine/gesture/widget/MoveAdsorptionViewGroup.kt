@@ -23,23 +23,14 @@ class MoveAdsorptionViewGroup : FrameLayout {
     init {
         setWillNotDraw(false)
     }
-    private val children1 = RectF()
-    private val children2 = RectF()
-    private val children3 = RectF()
+    val rectFs = arrayListOf<RectF>()
     fun setDrawChild(rect: RectF) {
-        children1.set(rect)
+        rectFs.add(rect)
         invalidate()
     }
 
-    fun setDrawChild2(rect: RectF) {
-        children2.set(rect)
-        invalidate()
-    }
 
-    fun setDrawChild3(rect: RectF) {
-        children3.set(rect)
-        invalidate()
-    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         paint.color = 0xFF0ba508.toInt()
@@ -53,9 +44,12 @@ class MoveAdsorptionViewGroup : FrameLayout {
 
     override fun onDrawForeground(canvas: Canvas) {
         super.onDrawForeground(canvas)
-        paint.color = 0x98262776.toInt()
-        canvas.drawRect(children1, paint)
-        canvas.drawRect(children2, paint)
-        canvas.drawRect(children3, paint)
+        paint.color = 0x33262776.toInt()
+        for (rectF in rectFs) {
+            canvas.drawRect(rectF, paint)
+        }
+        for (rectF in rectFs) {
+            canvas.drawLine(rectF.centerX(), 0f, rectF.centerX(), height.toFloat(), paint)
+        }
     }
 }

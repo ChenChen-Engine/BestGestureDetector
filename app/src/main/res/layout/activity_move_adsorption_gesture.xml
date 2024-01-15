@@ -14,13 +14,13 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_margin="50dp"
-            android:background="#22884443">
+            android:background="#44083183">
 
             <chenchen.engine.gesture.widget.MoveAdsorptionGestureView
                 android:id="@+id/child"
                 android:layout_width="70dp"
                 android:layout_height="70dp"
-                android:background="#67984626" />
+                android:background="#008EFF" />
 
         </chenchen.engine.gesture.widget.MoveAdsorptionViewGroup>
 
@@ -31,7 +31,24 @@
             android:layout_gravity="right"
             android:layout_marginTop="50dp"
             android:layout_marginEnd="50dp"
-            android:background="#98467626" />
+            android:background="#66FF00" />
+
+        <FrameLayout
+            android:id="@+id/group2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#44322634">
+
+            <chenchen.engine.gesture.widget.MoveAdsorptionGestureView
+                android:id="@+id/child4"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:layout_gravity="right"
+                android:layout_marginTop="200dp"
+                android:layout_marginEnd="50dp"
+                android:background="#D30FA3" />
+
+        </FrameLayout>
     </FrameLayout>
 
     <chenchen.engine.gesture.widget.MoveAdsorptionGestureView
@@ -41,6 +58,36 @@
         android:layout_gravity="bottom"
         android:layout_marginStart="60dp"
         android:layout_marginBottom="60dp"
-        android:background="#82466796" />
+        android:background="#FF0000" />
+
+
+    <FrameLayout
+        android:id="@+id/frame2"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleX="1.4"
+        android:scaleY="1.2">
+
+        <chenchen.engine.gesture.widget.MoveAdsorptionViewGroup
+            android:id="@+id/group3"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="50dp"
+            android:background="#44CD2760"
+            android:scaleX="1.4"
+            android:scaleY="1.2">
+
+            <chenchen.engine.gesture.widget.MoveAdsorptionGestureView
+                android:id="@+id/child5"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:layout_marginTop="350dp"
+                android:background="#FF5722"
+                android:scaleX="1.2"
+                android:scaleY="1.4" />
+        </chenchen.engine.gesture.widget.MoveAdsorptionViewGroup>
+
+
+    </FrameLayout>
 
 </FrameLayout>
