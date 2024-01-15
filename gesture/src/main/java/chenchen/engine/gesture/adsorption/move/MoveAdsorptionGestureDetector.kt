@@ -30,7 +30,7 @@ import kotlin.math.roundToInt
  * @since: 2023/4/25 17:38
  * 移动吸附手势
  * list:
- * - [ ] 对[View]所在的坐标系变换过(缩放、旋转)的体验不友好
+ * - [-] 是否要兼容x,y属性，l,t,r,b属性对[View]所在的坐标系旋转过的体验不友好
  */
 class MoveAdsorptionGestureDetector(
     private val adsorption: MoveAdsorption,
