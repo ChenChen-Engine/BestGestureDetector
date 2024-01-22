@@ -356,7 +356,7 @@ internal data class BestGestureState(
      * 设置累积移动值
      */
     fun setupAccumulateMoveX(value: Float) {
-        require(value > 0) { "设置BestGestureDetector.accumulateMoveX()的值必须大于0, value:${value}" }
+        require(value >= 0) { "设置BestGestureDetector.accumulateMoveX()的值必须>=0, value:${value}" }
         accumulateMoveX = value
         rememberAccumulateMoveX = 0f
     }
@@ -365,7 +365,7 @@ internal data class BestGestureState(
      * 设置累积移动值
      */
     fun setupAccumulateMoveY(value: Float) {
-        require(value > 0) { "设置BestGestureDetector.accumulateMoveY()的值必须大于0, value:${value}" }
+        require(value >= 0) { "设置BestGestureDetector.accumulateMoveY()的值必须>=0, value:${value}" }
         accumulateMoveY = value
         rememberAccumulateMoveY = 0f
     }
@@ -374,7 +374,7 @@ internal data class BestGestureState(
      * 设置累积旋转值
      */
     fun setupAccumulateRotation(value: Float) {
-        require(value > 0) { "设置BestGestureDetector.accumulateRotation()的值必须大于0, value:${value}" }
+        require(value >= 0) { "设置BestGestureDetector.accumulateRotation()的值必须>=0, value:${value}" }
         accumulateRotation = value
         rememberAccumulateRotation = 0f
     }
@@ -383,7 +383,7 @@ internal data class BestGestureState(
      * 记录累积缩放值
      */
     fun setupAccumulateScale(value: Float) {
-        require(value > 0) { "设置BestGestureDetector.accumulateScale()的值必须大于0, value:${value}" }
+        require(value >= 0) { "设置BestGestureDetector.accumulateScale()的值必须>=0, value:${value}" }
         accumulateScale = value
         rememberAccumulateScale = 0f
     }
