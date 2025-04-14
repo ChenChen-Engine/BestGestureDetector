@@ -89,16 +89,6 @@ internal data class BestGestureState(
     var isInLongPressProgress: Boolean = false,
 
     /**
-     * 是否处于单指单次按压滑动中，如果处于单指滑动，需要自己处理[MotionEvent.ACTION_UP]
-     */
-    var isInSingleTapScrollProgress: Boolean = false,
-
-    /**
-     * 是否处于单指两次按压(双击)滑动中，如果处于单指滑动，需要自己处理[MotionEvent.ACTION_UP]
-     */
-    var isInDoubleTapScrollingProgress: Boolean = false,
-
-    /**
      * 是否触发双击
      */
     var isTriggerDoubleClick: Boolean = false,
@@ -194,33 +184,9 @@ internal data class BestGestureState(
      * 记录缩放的值，每当值是[accumulateScale]倍数则消费一次，只在本次手势结束前有效，下次手势开始前将重置
      */
     var rememberAccumulateScale: Float = 0f,
-
-    /**
-     * 当按压后滑动([MotionEvent.ACTION_MOVE])超过这个阈值就不触发点击事件，对单击、双击都有效
-     * 最大范围指的是[View]的大小，[cancelClickScrollThreshold]需要小于等于[View]的大小，当触摸超出[View]的范围，即使满足
-     * 这个阈值，也不会触发点击，此时大概率会被[MotionEvent.ACTION_CANCEL]
-     * #
-     * PS: 设置的值大于[ViewConfiguration.getScaledTouchSlop] * 2无效
-     * #
-     * PS: 这是未来理想的功能，但目前无法实现，因为采用了原生[GestureDetectorCompat]，在点击行为上和[View]原始的行为不一致
-     * [View]可以DOWN后任意MOVE，最后UP时也算点击事件，而[GestureDetectorCompat]在DOWN后MOVE超出阈值，就无法响应点击
-     * 并且这个阈值无法修改，不能实现自定义阈值，未来可能会通过一些手段支持。
-     * #
-     * PS: 如果[View]在跟着手势移动，这个值没有参考意义，因为x/y不会变，不会认为在滑动
-     */
-    var cancelClickScrollThreshold: Float = defaultCancelClickScrollThreshold,
 ) {
 
     private val TAG = "BestGestureState"
-
-    companion object {
-        /**
-         * 默认滑动阈值，我不想做限制，但[GestureDetectorCompat]做了限制，
-         * 目前不适合定义非0的值，假设定义了1，[View]放大了10倍，当我看起来已经滑动了9，实际上[View]才滑动了0.9
-         * 在解决[GestureDetectorCompat]的问题之前，这个值都是0
-         */
-        const val defaultCancelClickScrollThreshold = 0f
-    }
 
     /**
      * 记录当前Event
@@ -649,14 +615,6 @@ internal data class BestGestureState(
     }
 
     /**
-     * 设置滑动阈值，大于这个阈值则取消点击事件，
-     * @param threshold 设置的值大于[ViewConfiguration.getScaledTouchSlop] * 2无效
-     */
-    fun setupCancelClickScrollThreshold(threshold: Float) {
-        cancelClickScrollThreshold = max(min(threshold, defaultCancelClickScrollThreshold), 0f)
-    }
-
-    /**
      * false 关闭双击，关闭双击后单击的响应会快一点，true 开启双击，开启双击后需要等待双击响应时间超时，单击响应就会慢一点
      */
     fun setupEnableDoubleClick(isEnable: Boolean) {
@@ -782,8 +740,6 @@ internal data class BestGestureState(
         isInSingleFingerProgress = false
         isInMultiFingerProgress = false
         isInLongPressProgress = false
-        isInSingleTapScrollProgress = false
-        isInDoubleTapScrollingProgress = false
         pivot.set(0f, 0f)
         consumeMoveX = 0f
         consumeMoveY = 0f

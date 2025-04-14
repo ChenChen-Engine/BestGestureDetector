@@ -199,7 +199,6 @@ class BestGestureDetector private constructor(
         } else if (state.isInSingleFingerProgress) {
             //单指手势
             if (touchListener != null && isMovingEvent()) {
-                state.isInSingleTapScrollProgress = isOutsideCancelClickScrolledThreshold()
                 isHandle = isHandle or onHandleSinglePointerMove()
                 if (isHandle) {
                     onAndroidGesture.onTouchEvent(event.event)
@@ -246,10 +245,8 @@ class BestGestureDetector private constructor(
         }
         if (state.isInSingleFingerProgress && touchListener != null) {
             when {
-                //按压后有滑动过，结束事件 fixme 当能解决GestureDetectorCompat的滑动阈值问题，就不需要这段代码
-                state.isInSingleTapScrollProgress ||
-                        //长按过，结束事件
-                        state.isInLongPressProgress ||
+                //长按过，结束事件
+                state.isInLongPressProgress ||
                         //使用过双指，但现在已经变成单指，又松手了，结束事件
                         state.isUsedMultiFinger -> {
                     touchListener?.onTouchEnd(this)
@@ -368,20 +365,6 @@ class BestGestureDetector private constructor(
     }
 
     /**
-     * 是否处于滚动阈值内，某为、某耀手机会出现一次点击事件，x,y不变的情况下发送DOWN,MOVE,UP三个事件
-     * 其他正常手机和原生逻辑都只是发送DOWN,UP，为兼容垃圾系统的异常情况，做一些处理
-     */
-    private fun isOutsideCancelClickScrolledThreshold(): Boolean {
-        return when {
-            abs((state.startEvent?.x ?: 0f) - (state.currentEvent?.x ?: 0f)) >=
-                    state.cancelClickScrollThreshold -> true
-            abs((state.startEvent?.y ?: 0f) - (state.currentEvent?.y ?: 0f)) >=
-                    state.cancelClickScrollThreshold -> true
-            else -> false
-        }
-    }
-
-    /**
      * 某为、某耀手机会出现一次点击事件，x,y不变的情况下发送DOWN,MOVE,UP三个事件
      * 其他正常手机和原生逻辑都只是发送DOWN,UP，为统一行为，兼容垃圾系统的异常情况，做一些处理
      */
@@ -419,7 +402,7 @@ class BestGestureDetector private constructor(
                     //开启了双击，就不在这里处理单击，在onSingleTapConfirmed中处理
                     return true
                 }
-                if (state.isInSingleTapScrollingGiveUpClick && state.isInSingleTapScrollProgress) {
+                if (state.isInSingleTapScrollingGiveUpClick) {
                     //开启了滑动过就丢弃点击事件
                     return true
                 }
@@ -473,7 +456,7 @@ class BestGestureDetector private constructor(
                     //没有开启双击，就不在这里处理单击，在onSingleTapUp中处理
                     return true
                 }
-                if (state.isInSingleTapScrollingGiveUpClick && state.isInSingleTapScrollProgress) {
+                if (state.isInSingleTapScrollingGiveUpClick) {
                     //开启了滑动过就丢弃点击事件
                     return true
                 }
@@ -500,14 +483,8 @@ class BestGestureDetector private constructor(
                     return true
                 }
                 when (event.action) {
-                    MotionEvent.ACTION_MOVE -> {
-                        //记录第二击是否滑动过
-                        if (isMovingEvent()) {
-                            state.isInDoubleTapScrollingProgress = isOutsideCancelClickScrolledThreshold()
-                        }
-                    }
                     MotionEvent.ACTION_UP -> {
-                        if (!(state.isInDoubleTapScrollingGiveUpClick && state.isInDoubleTapScrollingProgress)) {
+                        if (!(state.isInDoubleTapScrollingGiveUpClick)) {
                             //!(开启了滑动过就丢弃点击事件)
                             touchListener?.onDoubleClick(this@BestGestureDetector)
                         }
@@ -956,14 +933,6 @@ class BestGestureDetector private constructor(
      */
     fun accumulateScale(value: Float) {
         state.setupAccumulateScale(value)
-    }
-
-    /**
-     * 设置滑动阈值，大于这个阈值则取消点击事件，
-     * @param threshold 设置的值大于[ViewConfiguration.getScaledTouchSlop] * 2无效
-     */
-    fun setCancelClickScrollThreshold(threshold: Float) {
-        state.setupCancelClickScrollThreshold(threshold)
     }
 
     /**
